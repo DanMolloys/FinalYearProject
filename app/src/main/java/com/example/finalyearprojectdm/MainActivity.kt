@@ -4,7 +4,7 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import com.example.finalyearprojectdm.databinding.ActivityMainBinding
-import com.example.finalyearprojectdm.databinding.ActivitySigninBinding
+import com.example.finalyearprojectdm.ui.BuilderActivity
 import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : AppCompatActivity() {
