@@ -33,7 +33,6 @@ class MessageAdapter : RecyclerView.Adapter<MessageAdapter.MessageViewHolder>() 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder {
 
         //add message item to inflated layout
-
         val binding =
             MessageItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return MessageViewHolder(binding)
@@ -51,10 +50,9 @@ class MessageAdapter : RecyclerView.Adapter<MessageAdapter.MessageViewHolder>() 
 
         when (currentMessage.id) {
             //user sending a message, making users visible and bots gone
-            //plugin used "kotlin-android-extensions"
             SEND_ID -> {
                 holder.binding.tvMessage.apply {
-                    text = currentMessage.message
+                    text = currentMessage.message.toString()
                     visibility = View.VISIBLE
                 }
                 holder.binding.tvBotMessage.visibility = View.GONE
@@ -63,7 +61,7 @@ class MessageAdapter : RecyclerView.Adapter<MessageAdapter.MessageViewHolder>() 
             //same as above but for bots messages
             RECEIVE_ID -> {
                 holder.binding.tvBotMessage.apply {
-                    text = currentMessage.message
+                    text = currentMessage.message.toString()
                     visibility = View.VISIBLE
                 }
                 holder.binding.tvMessage.visibility = View.GONE

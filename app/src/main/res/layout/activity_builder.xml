@@ -36,8 +36,8 @@
             android:layout_weight="1"
             android:background="@drawable/round_button"
             android:backgroundTint="#26A69A"
-            android:text="Send"
-            android:textColor="@android:color/white" />
+            android:text="Submit"
+            android:textColor="@android:color/black" />
 
     </LinearLayout>
 
