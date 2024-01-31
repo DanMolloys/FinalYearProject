@@ -7,5 +7,7 @@
     <color name="orange">#FF8903</color>
     <color name="blue">#00C2FF</color>
 
+    <color name="gcBack">#8000C2FF</color>
+
     <color name="colorAccent">#FF7043</color>
 </resources>

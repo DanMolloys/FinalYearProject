@@ -1,21 +1,24 @@
 package com.example.finalyearprojectdm.utils
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import com.example.finalyearprojectdm.Holiday
 import com.example.finalyearprojectdm.Itinerary
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.regex.Pattern
 import java.util.*
 
 
-//Add
-
-
 object BotResponse {
     val holiday = Holiday()
     val itinerary = Itinerary()
+
+    private lateinit var firestore: FirebaseFirestore
+    private lateinit var firebaseAuth: FirebaseAuth
 
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -44,7 +47,16 @@ object BotResponse {
         val intPattern = Pattern.compile("\\b(\\d+)\\b")
         val intMatcher = intPattern.matcher(message)
 
-        val predefinedPhrases = listOf("fishing", "eating", "swimming")
+        val predefinedPhrases = listOf("fishing", "eating", "drinking", "swimming",
+            "running", "dancing", "cooking", "reading", "singing", "hiking",
+            "gardening", "shopping", "biking", "photographing", "writing", "jogging",
+            "playing", "skating", "travelling", "camping", "meditating", "snorkeling",
+            "sightseeing", "picnicking", "sunbathing", "exploring", "birdwatching",
+            "stargazing", "surfing", "skiing", "baking", "yoga", "paddle boarding", "scuba diving",
+            "rock climbing", "kayaking", "horse riding", "sailing", "barbecuing", "wine tasting",
+            "spa visiting", "museum touring", "beaching", "wildlife spotting", "canoeing",
+            "treasure hunting", "pottery making", "storytelling", "magic performing",
+            "concert attending", "clubbing", "gambling")
 
 
         //each response adds to counter
@@ -100,7 +112,18 @@ object BotResponse {
                                 "Budget: " + Holiday.budget + "\n " +
                                 "Companions: " + Holiday.amountOfPersons + "\n " +
                                 "Doing: " + thingsToDoStr.toString()
-                }
+
+                // Save the holiday to Firestore
+                val db = FirebaseFirestore.getInstance()
+                db.collection("holidays").document().set(holiday)
+                    .addOnSuccessListener {
+                        Log.d("Firestore", "DocumentSnapshot successfully written!")
+                    }
+                    .addOnFailureListener { e ->
+                        Log.w("Firestore", "Error writing document", e)
+                    }
+
+            }
             else -> {
                 "I'm not sure how to respond to that. Can you provide more details?"
             }
@@ -109,7 +132,7 @@ object BotResponse {
         }
 
     //using a java plugin that contains locations
-    //appears to only have coutries in the plugin, may use an API intead.
+    //appears to only have countries in the plugin, may use an API instead.
     fun isCountry(input: String): Boolean {
         val availableLocales: Array<Locale> = Locale.getAvailableLocales()
 

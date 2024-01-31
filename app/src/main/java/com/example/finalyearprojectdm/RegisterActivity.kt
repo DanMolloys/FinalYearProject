@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.finalyearprojectdm.databinding.ActivityRegisterBinding
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class RegisterActivity : AppCompatActivity() {
 
@@ -15,6 +16,8 @@ class RegisterActivity : AppCompatActivity() {
     //declare fireBase link
     private lateinit var firebaseAuth: FirebaseAuth
 
+    private lateinit var firestore: FirebaseFirestore
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -23,6 +26,7 @@ class RegisterActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         firebaseAuth = FirebaseAuth.getInstance()
+        firestore = FirebaseFirestore.getInstance()
 
         binding.buttonSignUp.setOnClickListener {
             val email = binding.etEmail.text.toString()
@@ -37,12 +41,21 @@ class RegisterActivity : AppCompatActivity() {
                     firebaseAuth.createUserWithEmailAndPassword(email, password)
                         .addOnCompleteListener {
                             if (it.isSuccessful) {
-                                //send to signInPage
-                                val intent = Intent(this, SingInActivity::class.java)
-                                startActivity(intent)
-                            } else {
-                                Toast.makeText(this, "Error", Toast.LENGTH_SHORT).show()
+                                // Create a User object
+                                val user = User(firebaseAuth.currentUser!!.uid, email)
 
+                                // Add the user to the Firestore database
+                                firestore.collection("users").document(user.id).set(user)
+                                    .addOnSuccessListener {
+                                        //send to signInPage
+                                        val intent = Intent(this, SingInActivity::class.java)
+                                        startActivity(intent)
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Toast.makeText(this, "Error adding user to Firestore: ${e.message}", Toast.LENGTH_SHORT).show()
+                                    }
+                            } else {
+                                Toast.makeText(this, "Error creating user: ${it.exception?.message}", Toast.LENGTH_SHORT).show()
                             }
                         }
                 } else {

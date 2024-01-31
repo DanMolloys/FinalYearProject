@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="@drawable/base_back">
+
+    <EditText
+        android:id="@+id/group_chat_name_field"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Group Chat Name" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/user_selection_recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/create_group_chat_button"
+        android:layout_below="@+id/group_chat_name_field"
+        android:layout_marginTop="16dp" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/create_group_chat_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:text="Create Group Chat"
+        android:background="@android:color/holo_blue_bright"
+        android:textColor="@android:color/black" />
+
+</RelativeLayout>
