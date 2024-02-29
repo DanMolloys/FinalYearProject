@@ -10,6 +10,7 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.finalyearprojectdm.DayItinerary
 import com.example.finalyearprojectdm.Holiday
 import com.example.finalyearprojectdm.Itinerary
 import com.example.finalyearprojectdm.MainActivity
@@ -136,7 +137,7 @@ class BuilderActivity : AppCompatActivity() {
     }
 
     private fun genItinerary(message: String) {
-        val apiKey = ""
+        val apiKey = "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"
 
         val thingsToDo = Holiday.thingsToDo.joinToString(", ")
 
@@ -146,7 +147,7 @@ class BuilderActivity : AppCompatActivity() {
                 " with " + Holiday.amountOfPersons + " amount of people" +
                 " with a budget of " + Holiday.budget +
                 " and include " + thingsToDo + " while giving specific locations and things to do with " +
-                "estimate prices after each day and a total expected price at the end"
+                "estimated prices after each day and a total expected price at the end. Underline any tourist attractions mentioned"
         val prompt = message
 
         val JSON = "application/json; charset=utf-8".toMediaTypeOrNull()
@@ -155,7 +156,7 @@ class BuilderActivity : AppCompatActivity() {
             JSON, """
         {
             "prompt": "$prompt",
-            "max_tokens": 500
+            "max_tokens": 1000
         }
     """.trimIndent()
         )
@@ -173,13 +174,36 @@ class BuilderActivity : AppCompatActivity() {
             val result = response.body?.string()
 
             withContext(Dispatchers.Main) {
-                // Display the result here.
                 val jsonObject = JSONObject(result)
-                val text = jsonObject.getJSONArray("choices").getJSONObject(0).getString("text")
+                var text = jsonObject.getJSONArray("choices").getJSONObject(0).getString("text")
                 customMessage(text ?: "No Result")
 
                 val itinerary = Itinerary()
-                itinerary.description = text
+                itinerary.description = text // Save the full description
+
+                // Find the first occurrence of "Day" and start from there.
+                val dayIndex = text.indexOf("Day")
+                if (dayIndex != -1) {
+                    text = text.substring(dayIndex)
+                }
+                // Split the itinerary into days.
+                val dayPattern = "(Day \\d+[:]? )".toRegex()
+                val days = dayPattern.split(text).filter { it.isNotBlank() }
+
+                // Add each day to the itinerary.
+                val addedDays = mutableSetOf<String>()
+
+                // Add each day to the itinerary.
+                for (i in days.indices) {
+                    val dayItinerary = DayItinerary()
+                    dayItinerary.dayNumber = i + 1
+                    dayItinerary.description = days[i]
+
+                    // Only add the day if it has not been added before.
+                    if (addedDays.add(dayItinerary.description)) {
+                        itinerary.days.add(dayItinerary)
+                    }
+                }
                 itinerary.title = Holiday.startingLocation + " trip for " + Holiday.amountOfPersons
 
                 addItineraryToFirestore(itinerary)
@@ -227,10 +251,24 @@ class BuilderActivity : AppCompatActivity() {
                 "thingsToDo" to Holiday.thingsToDo.toString()
             )
 
-            firestore.collection("users").document(user.uid).collection("itineraries")
-                .add(itineraryMap)
-                .addOnSuccessListener {
-                    Toast.makeText(this, "Itinerary added successfully", Toast.LENGTH_SHORT).show()
+            val itinerariesRef = firestore.collection("users").document(user.uid).collection("itineraries")
+            itinerariesRef.add(itineraryMap)
+                .addOnSuccessListener { documentReference ->
+                    // Add each day to the newly added itinerary.
+                    for (day in itinerary.days) {
+                        val dayMap = hashMapOf(
+                            "dayNumber" to day.dayNumber,
+                            "description" to day.description
+                        )
+                        itinerariesRef.document(documentReference.id).collection("days")
+                            .add(dayMap)
+                            .addOnSuccessListener {
+                                Toast.makeText(this, "Day added successfully", Toast.LENGTH_SHORT).show()
+                            }
+                            .addOnFailureListener { e ->
+                                customMessage("Error adding day: ${e.message}")
+                            }
+                    }
                 }
                 .addOnFailureListener { e ->
                     customMessage("Error adding itinerary: ${e.message}")

@@ -1,7 +1,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/base_back"
+    android:background="@drawable/background_1"
     android:orientation="vertical">
 
     <androidx.appcompat.widget.Toolbar
@@ -12,16 +12,15 @@
 
     <TextView
         android:layout_width="match_parent"
-        android:layout_height="9dp"
-        android:layout_weight="1"
+        android:layout_height="wrap_content"
         android:gravity="center"
-        android:text="Group Chats"
-        android:textSize="20sp" />
+        android:text="@string/underlined_group_chats"
+        android:textSize="30sp" />
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="4">
+        android:layout_weight="1">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/group_chat_recycler_view"

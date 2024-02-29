@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="profile_pics">
+        <item>@drawable/patrick</item>
+        <item>@drawable/spongebob</item>
+        <item>@drawable/squidward</item>
+        <!-- Add more items here -->
+    </array>
+</resources>

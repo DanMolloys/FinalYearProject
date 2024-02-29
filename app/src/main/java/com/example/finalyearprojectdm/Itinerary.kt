@@ -12,5 +12,7 @@ data class Itinerary(
     var startDate: String = "",
     var budget: String = "",
     var amountOfPersons: String = "",
-    var thingsToDo: String = ""
+    var thingsToDo: String = "",
+
+    var days: MutableList<DayItinerary> = mutableListOf()
 ) : Serializable

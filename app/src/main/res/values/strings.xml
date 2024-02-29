@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">FinalYearProjectDM</string>
+
+    <string name="underlined_group_chats"><u>Group Chats</u></string>
 </resources>

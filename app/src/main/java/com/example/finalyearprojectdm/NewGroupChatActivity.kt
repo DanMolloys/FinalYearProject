@@ -34,10 +34,10 @@ class NewGroupChatActivity : AppCompatActivity() {
 
             val groupName = findViewById<EditText>(R.id.group_chat_name_field).text.toString()
             val selectedUserIds = userSelectionAdapter.getSelectedUserIds().toMutableList()
-            selectedUserIds.add(FirebaseAuth.getInstance().currentUser?.uid ?: "")
+            val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+            selectedUserIds.add(currentUserId)
 
-            val groupChat =
-                GroupChat(id = groupChatRef.id, name = groupName, userIds = selectedUserIds)
+            val groupChat = GroupChat(id = groupChatRef.id, name = groupName, userIds = selectedUserIds, creator = currentUserId)
             groupChatRef.set(groupChat)
                 .addOnSuccessListener {
                     Toast.makeText(this, "Group Chat Created", Toast.LENGTH_SHORT).show()

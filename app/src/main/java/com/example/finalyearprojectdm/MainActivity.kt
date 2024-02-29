@@ -56,6 +56,8 @@ class MainActivity : AppCompatActivity() {
         return when (item.itemId) {
             R.id.profile -> {
                 // go to edit profile page
+                val intent = Intent (this, ProfileUpdateActivity ::class.java)
+                startActivity(intent)
                 true
             }
             R.id.logOut -> {

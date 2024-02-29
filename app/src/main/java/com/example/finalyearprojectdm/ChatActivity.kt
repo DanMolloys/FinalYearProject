@@ -58,8 +58,23 @@ class ChatActivity : AppCompatActivity() {
         }
     }
 
+    private fun loadChatMessages() {
+        val groupId = intent.getStringExtra("GROUP_ID") ?: return
+        // Read from the group chat's messages subcollection
+        FirebaseFirestore.getInstance().collection("groupChats").document(groupId)
+            .collection("chatMessages")
+            .get()
+            .addOnSuccessListener { documents ->
+                for (document in documents) {
+                    val message = document.toObject(ChatMessage::class.java)
+                    chatMessages.add(message)
+                }
+                chatAdapter.notifyDataSetChanged()
+            }
+    }
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.main_back_menu, menu)
+        menuInflater.inflate(R.menu.groupchat_menu, menu)
         return true
     }
 
@@ -75,22 +90,22 @@ class ChatActivity : AppCompatActivity() {
                 startActivity(intent)
                 true
             }
+            R.id.maps -> {
+                // Create a new intent for MapsViewActivity
+                val intent = Intent(this, MapsViewActivity::class.java)
+
+                // Get the group ID from the current activity's intent
+                val groupId = this.intent.getStringExtra("GROUP_ID")
+                if (groupId != null) {
+                    // Put the GROUP_ID into the new intent
+                    intent.putExtra("GROUP_ID", groupId)
+                }
+
+                // Start the MapsViewActivity
+                startActivity(intent)
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
-    }
-
-    private fun loadChatMessages() {
-        val groupId = intent.getStringExtra("GROUP_ID") ?: return
-        // Read from the group chat's messages subcollection
-        FirebaseFirestore.getInstance().collection("groupChats").document(groupId)
-            .collection("chatMessages")
-            .get()
-            .addOnSuccessListener { documents ->
-                for (document in documents) {
-                    val message = document.toObject(ChatMessage::class.java)
-                    chatMessages.add(message)
-                }
-                chatAdapter.notifyDataSetChanged()
-            }
     }
 }

@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp"
-    android:background="@drawable/base_back">
+    android:background="@drawable/background_1">
 
     <EditText
         android:id="@+id/group_chat_name_field"
@@ -25,7 +25,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:text="Create Group Chat"
-        android:background="@android:color/holo_blue_bright"
+        android:background="@color/purple"
         android:textColor="@android:color/black" />
 
 </RelativeLayout>

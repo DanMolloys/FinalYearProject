@@ -20,6 +20,8 @@ class GroupChatActivity : AppCompatActivity() {
     private lateinit var groupChatAdapter: GroupChatAdapter
     private val groupChats = mutableListOf<GroupChat>()
 
+    private var selectedGroupId: String? = null
+
     private lateinit var toolbar: Toolbar
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,23 +50,6 @@ class GroupChatActivity : AppCompatActivity() {
         loadGroupChats()
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.reg_menu, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.goMain -> {
-                val intent = Intent (this, MainActivity ::class.java)
-                startActivity(intent)
-                true
-            }
-
-            else -> super.onOptionsItemSelected(item)
-        }
-    }
-
     private fun loadGroupChats() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         FirebaseFirestore.getInstance().collection("groupChats")
@@ -85,4 +70,24 @@ class GroupChatActivity : AppCompatActivity() {
                 groupChatAdapter.notifyDataSetChanged()
             }
     }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.reg_menu, menu)
+        return true
+    }
+
+
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.goMain -> {
+                val intent = Intent (this, MainActivity ::class.java)
+                startActivity(intent)
+                true
+            }
+
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
 }

@@ -1,0 +1,23 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+
+    <item
+        android:id="@+id/maps"
+        android:icon="@drawable/baseline_add_location_alt_24"
+        android:title="Profile"
+        app:showAsAction="always"/>
+
+    <item
+        android:id="@+id/back"
+        android:icon="@drawable/baseline_arrow_back_24"
+        android:title="Log out"
+        app:showAsAction="always"/>
+
+    <item
+        android:id="@+id/goMain"
+        android:icon="@drawable/baseline_add_home_24"
+        android:title="Log out"
+        app:showAsAction="always"/>
+
+</menu>

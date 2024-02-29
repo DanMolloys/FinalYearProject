@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/base_back"
+    android:background="@drawable/background_1"
     tools:context=".MainActivity">
 
     <androidx.appcompat.widget.Toolbar
@@ -20,49 +20,51 @@
         android:id="@+id/buttonChatBuilder"
         android:layout_width="285dp"
         android:layout_height="53dp"
-        android:layout_marginHorizontal="16dp"
-        android:background="@color/blue"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="168dp"
+        android:layout_marginEnd="16dp"
+        android:background="@color/purple"
+        android:drawableLeft="@drawable/baseline_create_24"
+        android:paddingLeft="15dp"
         android:text="Build Proposal"
-        android:textColor="@color/black"
+        android:textColor="@color/white"
         android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.395" />
-
-
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/buttonGroupChat"
-        android:layout_width="285dp"
-        android:layout_height="53dp"
-        android:layout_marginHorizontal="16dp"
-        android:background="@color/blue"
-        android:text="Group Chats"
-        android:textColor="@color/black"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.724" />
+        app:layout_constraintTop_toBottomOf="@id/toolbar" />
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/buttonCurrentPro"
         android:layout_width="285dp"
         android:layout_height="53dp"
-        android:layout_marginHorizontal="16dp"
-        android:background="@color/blue"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="336dp"
+        android:layout_marginEnd="16dp"
+        android:background="@color/purple"
+        android:drawableLeft="@drawable/baseline_history_edu_24"
+        android:paddingLeft="15dp"
         android:text="Built Proposals"
-        android:textColor="@color/black"
+        android:textColor="@color/white"
         android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.551" />
+        app:layout_constraintTop_toTopOf="@+id/toolbar" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/buttonGroupChat"
+        android:layout_width="285dp"
+        android:layout_height="53dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="444dp"
+        android:layout_marginEnd="16dp"
+        android:background="@color/purple"
+        android:drawableLeft="@drawable/baseline_groups_24"
+        android:paddingLeft="15dp"
+        android:text="Group Chats"
+        android:textColor="@color/white"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
