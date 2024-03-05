@@ -28,29 +28,59 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <TextView
-                android:id="@+id/titleTextView"
-                android:layout_width="wrap_content"
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="24sp"
-                android:textStyle="bold"
-                tools:text="Title" />
+                android:layout_margin="8dp"
+                app:cardElevation="4dp">
+
+                <TextView
+                    android:id="@+id/titleTextView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/text_view_background"
+                    tools:text="Title" />
+
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                app:cardElevation="4dp">
 
             <TextView
                 android:id="@+id/descriptionTextView"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:padding="16dp"
                 android:textSize="18sp"
+                android:background="@drawable/text_view_background"
                 tools:text="Description" />
+
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                app:cardElevation="4dp">
 
             <TextView
                 android:id="@+id/flightInfoTextView"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:padding="16dp"
                 android:textSize="18sp"
-                tools:text="Flight Info" />
+                android:background="@drawable/text_view_background"
+                tools:text="Flight info" />
 
-            <!-- Add more TextViews -->
+            </androidx.cardview.widget.CardView>
 
         </LinearLayout>
 

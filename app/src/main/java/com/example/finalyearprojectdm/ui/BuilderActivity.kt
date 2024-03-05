@@ -3,6 +3,7 @@ package com.example.finalyearprojectdm.ui
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
@@ -136,18 +137,31 @@ class BuilderActivity : AppCompatActivity() {
         }
     }
 
+
+
     private fun genItinerary(message: String) {
-        val apiKey = "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"
+        val apiKey = "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"
 
         val thingsToDo = Holiday.thingsToDo.joinToString(", ")
 
-        //message to be sent to API
-        val message = "Create a day by day holiday itinerary in " + Holiday.startingLocation +
-                " starting on the " + Holiday.startDate +
-                " with " + Holiday.amountOfPersons + " amount of people" +
-                " with a budget of " + Holiday.budget +
-                " and include " + thingsToDo + " while giving specific locations and things to do with " +
-                "estimated prices after each day and a total expected price at the end. Underline any tourist attractions mentioned"
+        //message to be sent to GPT API
+        val message = "I am planning a holiday and need a detailed itinerary. Here are the details:" +
+                " - Starting Location: " + Holiday.startingLocation +
+                " - Start Date: " + Holiday.startDate +
+                " - Number of People: " + Holiday.amountOfPersons +
+                " - Budget: " + Holiday.budget +
+                " - Interests: " + thingsToDo +
+        "Please provide a 5-day itinerary, keeping each day's description within 100 words to fit the total within 500 words. Follow the format below:" +
+                "Day 1: " +
+                "Date: [Date]" +
+                "Destination: [City (Airport Code)]" +
+                " Estimated Budget: [Budget]" +
+                " [Blank line] " +
+                "Itinerary: " +
+                "- [Activity 1]" +
+                "- [Activity 2]" +
+                "- [Activity 3]" +
+                "Repeat this for days 2 to 5. Create a reasonable space between each day"
         val prompt = message
 
         val JSON = "application/json; charset=utf-8".toMediaTypeOrNull()
@@ -180,6 +194,11 @@ class BuilderActivity : AppCompatActivity() {
 
                 val itinerary = Itinerary()
                 itinerary.description = text // Save the full description
+
+                val pattern = "\\b([A-Z][a-z]*)\\b".toRegex()
+                val locations = pattern.findAll(itinerary.description)
+                    .map { it.value }
+                    .toSet() // Convert to a set to remove any duplicates
 
                 // Find the first occurrence of "Day" and start from there.
                 val dayIndex = text.indexOf("Day")

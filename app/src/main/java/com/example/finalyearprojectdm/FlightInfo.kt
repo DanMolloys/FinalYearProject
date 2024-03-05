@@ -1,6 +1,10 @@
 package com.example.finalyearprojectdm
 
+import com.google.gson.JsonElement
+
 data class FlightInfo(
-    val airportName: String,
-    val airportCode: String
+    val status: Boolean,
+    val message: JsonElement,
+    val timestamp: Long,
+    val data: Data
 )
