@@ -66,10 +66,8 @@ class MapsViewActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_mapsview)
 
-        // Get the group ID from the Intent
         groupId = intent.getStringExtra("GROUP_ID").toString()
         if (groupId.isNullOrEmpty()) {
-            // Handle the error
             finish()
             return
         }
@@ -107,81 +105,9 @@ class MapsViewActivity : AppCompatActivity(), OnMapReadyCallback {
                 }
             }
         }
-
-        getLocation()
         displayAllUsersLocations()
     }
 
-    private fun getLocation() {
-        if (ActivityCompat.checkSelfPermission(
-                applicationContext,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            Toast.makeText(applicationContext, "No permission", Toast.LENGTH_LONG).show()
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                1
-            )
-        } else {
-            mMap.isMyLocationEnabled = true
-            mLocationRequest = LocationRequest()
-            mLocationRequest.interval = 10000
-            mLocationRequest.fastestInterval = 5000
-            mLocationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-            mFusedLocationClient = LocationServices.getFusedLocationProviderClient(applicationContext)
-            mFusedLocationClient.requestLocationUpdates(
-                mLocationRequest,
-                object : LocationCallback() {
-                    override fun onLocationResult(locationResult: LocationResult) {
-                        super.onLocationResult(locationResult)
-
-                        // Safely unwrap the lastLocation
-                        val location = locationResult.lastLocation
-                        if (location != null) {
-                            val lat = location.latitude
-                            val lng = location.longitude
-                            val currentLocation = LatLng(lat, lng)
-                            displayLocation(currentLocation)
-
-                            val db = FirebaseFirestore.getInstance()
-                            val userId = FirebaseAuth.getInstance().currentUser!!.uid
-                            val userLocation: MutableMap<String, Any> = HashMap()
-                            userLocation["latitude"] = lat
-                            userLocation["longitude"] = lng
-                            db.collection("users").document(userId)
-                                .update(userLocation)
-                                .addOnSuccessListener {
-                                    Log.d(TAG, "User location updated successfully!")
-                                }
-                                .addOnFailureListener { e ->
-                                    Log.w(TAG, "Error updating user location", e)
-                                }
-                        } else {
-                            Log.w(TAG, "No last location available")
-                        }
-                    }
-                },
-                null
-            )
-        }
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        when (requestCode) {
-            1 -> {
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    getLocation()
-                }
-            }
-        }
-    }
 
     private fun displayAllUsersLocations() {
         //get group ID and take the userIds

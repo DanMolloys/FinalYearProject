@@ -44,6 +44,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:padding="16dp"
+                    android:backgroundTint="@color/grey"
                     android:background="@drawable/text_view_background"/>
             </ScrollView>
         </LinearLayout>
@@ -75,6 +76,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:padding="16dp"
+                    android:backgroundTint="@color/grey"
                     android:background="@drawable/text_view_background"/>
             </ScrollView>
         </LinearLayout>

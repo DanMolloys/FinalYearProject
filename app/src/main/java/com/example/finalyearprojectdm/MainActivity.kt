@@ -17,6 +17,8 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var toolbar: Toolbar
 
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -28,6 +30,10 @@ class MainActivity : AppCompatActivity() {
         toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.title = ""
+
+        // Start the LocationService
+        val intent = Intent(this, LocationService::class.java)
+        startService(intent)
 
 
         binding.buttonChatBuilder.setOnClickListener {
@@ -62,8 +68,12 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.logOut -> {
                 firebaseAuth.signOut()
-                val intent = Intent (this, SingInActivity ::class.java)
-                startActivity(intent)
+                // Stop the LocationService
+                val intent = Intent(this, LocationService::class.java)
+                stopService(intent)
+                // Redirect to login page
+                val loginIntent = Intent (this, SingInActivity ::class.java)
+                startActivity(loginIntent)
                 true
             }
             else -> super.onOptionsItemSelected(item)

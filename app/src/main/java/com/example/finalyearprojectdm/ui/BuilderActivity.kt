@@ -140,7 +140,7 @@ class BuilderActivity : AppCompatActivity() {
 
 
     private fun genItinerary(message: String) {
-        val apiKey = "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"
+        val apiKey = "key"
 
         val thingsToDo = Holiday.thingsToDo.joinToString(", ")
 
@@ -273,6 +273,9 @@ class BuilderActivity : AppCompatActivity() {
             val itinerariesRef = firestore.collection("users").document(user.uid).collection("itineraries")
             itinerariesRef.add(itineraryMap)
                 .addOnSuccessListener { documentReference ->
+                    // Set the ID of the Itinerary to the ID of the document
+                    itinerary.id = documentReference.id
+
                     // Add each day to the newly added itinerary.
                     for (day in itinerary.days) {
                         val dayMap = hashMapOf(
@@ -296,6 +299,4 @@ class BuilderActivity : AppCompatActivity() {
             Toast.makeText(this, "No user is logged in", Toast.LENGTH_SHORT).show()
         }
     }
-
-
 }

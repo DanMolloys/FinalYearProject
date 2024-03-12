@@ -13,6 +13,7 @@ import android.view.MenuItem
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -71,7 +72,6 @@ class ItineraryDetailsActivity : AppCompatActivity() {
                 Log.e("API_REQUEST_ERROR", "Failed to execute request", e)
             }
         }
-
          */
 
         // Display the itinerary title and details
@@ -81,10 +81,63 @@ class ItineraryDetailsActivity : AppCompatActivity() {
 
         binding.titleTextView.setOnClickListener {
             if (itinerary != null) {
-                // what happens when clicked
+                // Create an EditText for the dialog
+                val editText = EditText(this)
+                editText.setText(itinerary.title)
+
+                // Create the AlertDialog
+                val alertDialog = AlertDialog.Builder(this)
+                    .setTitle("Edit Itinerary Title")
+                    .setView(editText)
+                    .setPositiveButton("Save", null)
+                    .setNegativeButton("Cancel") { dialog, _ ->
+                        dialog.cancel()
+                    }
+                    .create()
+
+                alertDialog.setOnShowListener {
+                    val positiveButton = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                    positiveButton.setOnClickListener {
+                        val newTitle = editText.text.toString().trim()
+                        if (newTitle.isNotBlank()) {
+                            updateItineraryTitle(itinerary, newTitle)
+                            alertDialog.dismiss()
+                        }
+                    }
+
+                    // Change button color
+                    positiveButton.setTextColor(Color.RED)
+                    val negativeButton = alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                    negativeButton.setTextColor(Color.BLUE)
+                }
+
+                alertDialog.show()
             }
         }
     }
+
+    private fun updateItineraryTitle(itinerary: Itinerary, newTitle: String) {
+        val user = firebaseAuth.currentUser
+        if (user != null) {
+            val itinerariesRef = firestore.collection("users")
+                .document(user.uid)
+                .collection("itineraries")
+                .document(itinerary.id.toString())
+            itinerariesRef.update("title", newTitle)
+                .addOnSuccessListener {
+                    // Update the TextView and the itinerary object
+                    binding.titleTextView.text = newTitle
+                    itinerary.title = newTitle
+                    Toast.makeText(this, "Title updated successfully", Toast.LENGTH_SHORT).show()
+                }
+                .addOnFailureListener { e ->
+                    Log.w(TAG, "Error updating document", e)
+                    Toast.makeText(this, "Error updating title", Toast.LENGTH_SHORT).show()
+                }
+        }
+    }
+
+
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.main_back_menu, menu)

@@ -22,6 +22,19 @@ class DayAdapter(private val days: List<DayItinerary>) : RecyclerView.Adapter<Da
         val day = days[position]
         holder.dayNumber.text = "Day ${day.dayNumber}"
         holder.dayDescription.text = day.description
+
+        // Set the description visibility to GONE by default
+        holder.dayDescription.visibility = View.GONE
+
+        // Set a click listener on the day number text view
+        holder.dayNumber.setOnClickListener {
+            // Toggle the description visibility when the day number is clicked
+            if (holder.dayDescription.visibility == View.GONE) {
+                holder.dayDescription.visibility = View.VISIBLE
+            } else {
+                holder.dayDescription.visibility = View.GONE
+            }
+        }
     }
 
     override fun getItemCount(): Int = days.size
