@@ -20,6 +20,7 @@ import androidx.appcompat.widget.Toolbar
 import com.example.finalyearprojectdm.databinding.ActivityItineraryDetailsBinding
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.auth.FirebaseAuth
+import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -50,29 +51,54 @@ class ItineraryDetailsActivity : AppCompatActivity() {
 
         val itinerary = intent.getSerializableExtra("itinerary") as? Itinerary
 
-        /*
+        val destinationAirportCode = itinerary?.airportCode
+
         val client = OkHttpClient()
 
         val request = Request.Builder()
-            .url("https://tripadvisor16.p.rapidapi.com/api/v1/flights/searchFlights?sourceAirportCode=DUB&destinationAirportCode=LHR&date=2024-03-06&itineraryType=ROUND_TRIP&sortOrder=best_flights&numAdults=1&numSeniors=0&classOfService=ECONOMY&pageNumber=1&currencyCode=USD")
+            .url("https://tripadvisor16.p.rapidapi.com/api/v1/flights/searchFlights?sourceAirportCode=DUB&destinationAirportCode=LHR&date=2024-06-07&itineraryType=ONE_WAY&sortOrder=ML_BEST_VALUE&numAdults=1&numSeniors=0&classOfService=ECONOMY&pageNumber=1&currencyCode=USD")
             .get()
             .addHeader("X-RapidAPI-Key", "a24edb7afcmsh52645be6fd3c50dp17e1aejsn9a1ef81f7bf2")
             .addHeader("X-RapidAPI-Host", "tripadvisor16.p.rapidapi.com")
             .build()
 
+        Log.d("API_REQUEST_PROGRESS", "Request built, ready to send")
+
         GlobalScope.launch(Dispatchers.IO) {
             try {
+                Log.d("API_REQUEST_PROGRESS", "Sending request")
                 val response = client.newCall(request).execute()
+                Log.d("API_REQUEST_PROGRESS", "Request sent, received response")
+
                 val responseBody = response.body?.string()
 
+                val gson = Gson()
+                val apiResponse = gson.fromJson(responseBody, ApiResponse::class.java)
+
                 withContext(Dispatchers.Main) {
-                    binding.flightInfoTextView.text = responseBody
+                    Log.d("API_REQUEST_PROGRESS", "Updating UI with response")
+                    if (apiResponse.data.flights.isNotEmpty()) {
+                        val flight = apiResponse.data.flights[0]
+                        if (flight.segments.isNotEmpty()) {
+                            val segment = flight.segments[0]
+                            if (segment.legs.isNotEmpty()) {
+                                val leg = segment.legs[0]
+                                val flightInfo = "Origin: ${leg.originStationCode}\n" +
+                                        "Destination: ${leg.destinationStationCode}\n" +
+                                        "Departure Time: ${leg.departureDateTime}\n" +
+                                        "Arrival Time: ${leg.arrivalDateTime}\n"
+                                        //"Purchase Link: ${flight.purchaseLinks[0].url}"    LINK TO FLIGHT PURCHASE
+                                binding.flightInfoTextView.text = flightInfo
+                            }
+                        }
+                    }
+                    Log.d("API_REQUEST_PROGRESS", "UI updated")
                 }
             } catch (e: Exception) {
                 Log.e("API_REQUEST_ERROR", "Failed to execute request", e)
             }
         }
-         */
+
 
         // Display the itinerary title and details
         binding.titleTextView.setText(itinerary?.title)

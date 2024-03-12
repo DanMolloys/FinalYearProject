@@ -1,5 +1,7 @@
 package com.example.finalyearprojectdm
 
 data class Session(
-    val flights: List<Flight>
+    val searchHash: String,
+    val pageLoadUid: String,
+    val searchId: String
 )

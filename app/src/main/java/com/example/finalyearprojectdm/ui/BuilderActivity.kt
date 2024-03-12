@@ -155,7 +155,7 @@ class BuilderActivity : AppCompatActivity() {
                 "Day 1: " +
                 "Date: [Date]" +
                 "Destination: [City (Airport Code)]" +
-                " Estimated Budget: [Budget]" +
+                " Estimated Spending: [Cost of activities for the day]" +
                 " [Blank line] " +
                 "Itinerary: " +
                 "- [Activity 1]" +
@@ -199,6 +199,13 @@ class BuilderActivity : AppCompatActivity() {
                 val locations = pattern.findAll(itinerary.description)
                     .map { it.value }
                     .toSet() // Convert to a set to remove any duplicates
+
+                // Extract the airport code
+                val airportCodePattern = "\\(([A-Z]{3})\\)".toRegex()
+                val matchResult = airportCodePattern.find(itinerary.description)
+                if (matchResult != null) {
+                    itinerary.airportCode = matchResult.groupValues[1] // Save the airport code
+                }
 
                 // Find the first occurrence of "Day" and start from there.
                 val dayIndex = text.indexOf("Day")
@@ -267,7 +274,8 @@ class BuilderActivity : AppCompatActivity() {
                 "startDate" to Holiday.startDate.toString(),
                 "budget" to Holiday.budget.toString(),
                 "amountOfPersons" to Holiday.amountOfPersons.toString(),
-                "thingsToDo" to Holiday.thingsToDo.toString()
+                "thingsToDo" to Holiday.thingsToDo.toString(),
+                "airportCode" to itinerary.airportCode
             )
 
             val itinerariesRef = firestore.collection("users").document(user.uid).collection("itineraries")

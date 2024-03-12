@@ -6,6 +6,7 @@ data class Itinerary(
     var id: String = "",
     var userId: String = "",
 
+    var airportCode: String = "",
     var title: String = "",
     var description: String = "",
     var startingLocation: String = "",
