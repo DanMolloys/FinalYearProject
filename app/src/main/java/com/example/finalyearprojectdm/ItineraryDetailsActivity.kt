@@ -1,5 +1,6 @@
 package com.example.finalyearprojectdm
 
+import GroupChatAdapter
 import android.content.ContentValues.TAG
 import android.content.DialogInterface
 import android.content.Intent
@@ -10,6 +11,7 @@ import android.text.TextWatcher
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -17,7 +19,10 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.finalyearprojectdm.databinding.ActivityItineraryDetailsBinding
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.auth.FirebaseAuth
 import com.google.gson.Gson
@@ -53,6 +58,7 @@ class ItineraryDetailsActivity : AppCompatActivity() {
 
         val destinationAirportCode = itinerary?.airportCode
 
+        /*
         val client = OkHttpClient()
 
         val request = Request.Builder()
@@ -99,6 +105,8 @@ class ItineraryDetailsActivity : AppCompatActivity() {
             }
         }
 
+         */
+
 
         // Display the itinerary title and details
         binding.titleTextView.setText(itinerary?.title)
@@ -140,8 +148,19 @@ class ItineraryDetailsActivity : AppCompatActivity() {
                 alertDialog.show()
             }
         }
+
+        val sendToChatButton: Button = findViewById(R.id.send_to_chat_button)
+        sendToChatButton.setOnClickListener {
+            val itinerary = intent.getSerializableExtra("itinerary") as? Itinerary
+            if (itinerary != null) {
+                showGroupChatsBottomSheet(itinerary)
+            } else {
+                Toast.makeText(this, "Itinerary details not found", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
+    //update the title of an itinerary in Firestore.
     private fun updateItineraryTitle(itinerary: Itinerary, newTitle: String) {
         val user = firebaseAuth.currentUser
         if (user != null) {
@@ -151,7 +170,6 @@ class ItineraryDetailsActivity : AppCompatActivity() {
                 .document(itinerary.id.toString())
             itinerariesRef.update("title", newTitle)
                 .addOnSuccessListener {
-                    // Update the TextView and the itinerary object
                     binding.titleTextView.text = newTitle
                     itinerary.title = newTitle
                     Toast.makeText(this, "Title updated successfully", Toast.LENGTH_SHORT).show()
@@ -163,7 +181,68 @@ class ItineraryDetailsActivity : AppCompatActivity() {
         }
     }
 
+    // shows a bottom sheet with a list of group chats that the user can send the itinerary too
+    private fun showGroupChatsBottomSheet(itinerary: Itinerary) {
+        val bottomSheetDialog = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.bottom_sheet_group_chats, null)
+        bottomSheetDialog.setContentView(view)
 
+        val recyclerView: RecyclerView = view.findViewById(R.id.group_chats_recycler_view)
+        recyclerView.layoutManager = LinearLayoutManager(this)
+
+        // Initialize an empty list for group chats
+        val groupChats = mutableListOf<GroupChat>()
+        val groupChatAdapter = GroupChatAdapter(groupChats) { groupChat ->
+            sendItineraryToGroupChat(itinerary, groupChat)
+            bottomSheetDialog.dismiss()
+        }
+        recyclerView.adapter = groupChatAdapter
+
+        // Load group chats from Firestore
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        FirebaseFirestore.getInstance().collection("groupChats")
+            .whereArrayContains("userIds", userId)
+            .get()
+            .addOnSuccessListener { documents ->
+                val fetchedGroupChats = documents.map { document ->
+                    document.toObject(GroupChat::class.java).copy(id = document.id)
+                }
+                // Update the adapter with the fetched group chats
+                groupChatAdapter.updateGroupChats(fetchedGroupChats)
+            }
+            .addOnFailureListener { e ->
+                // Handle the error here
+                Toast.makeText(this, "Failed to load group chats: ${e.message}", Toast.LENGTH_SHORT)
+                    .show()
+            }
+
+        bottomSheetDialog.show()
+    }
+
+    private fun sendItineraryToGroupChat(itinerary: Itinerary, groupChat: GroupChat) {
+        // Convert the itinerary to a message format that can be sent to the group chat
+        val message = ChatMessage(
+            text = itinerary.title,
+            senderId = FirebaseAuth.getInstance().currentUser?.uid ?: "",
+            itinerary = itinerary
+        )
+
+        // Send the message to the Firestore collection for the selected group chat
+        FirebaseFirestore.getInstance().collection("groupChats").document(groupChat.id)
+            .collection("chatMessages").add(message)
+            .addOnSuccessListener {
+                Toast.makeText(
+                    this,
+                    "Itinerary sent to group chat successfully",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "Failed to send itinerary to group chat", Toast.LENGTH_SHORT)
+                    .show()
+                Log.e(TAG, "Error sending itinerary to group chat", e)
+            }
+    }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.main_back_menu, menu)

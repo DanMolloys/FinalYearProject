@@ -28,6 +28,8 @@ class GroupChatActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_groupchat)
 
+        val itinerary = intent.getSerializableExtra("itinerary") as? Itinerary
+
         recyclerView = findViewById(R.id.group_chat_recycler_view)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
@@ -38,6 +40,8 @@ class GroupChatActivity : AppCompatActivity() {
         groupChatAdapter = GroupChatAdapter(groupChats) { groupChat ->
             val intent = Intent(this, ChatActivity::class.java)
             intent.putExtra("GROUP_ID", groupChat.id) // pass the group chat ID to the chat activity
+            intent.putExtra("itinerary", itinerary) // pass the itinerary to the chat activity
+            intent.putExtra("send_itinerary", true) // indicate that the itinerary should be sent immediately
             startActivity(intent)
         }
         recyclerView.adapter = groupChatAdapter

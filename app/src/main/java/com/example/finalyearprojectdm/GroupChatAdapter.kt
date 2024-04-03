@@ -7,8 +7,8 @@ import com.example.finalyearprojectdm.GroupChat
 import com.example.finalyearprojectdm.R
 
 class GroupChatAdapter(
-    private val groupChats: List<GroupChat>,
-    private val itemClick: (GroupChat) -> Unit
+    private var groupChats: List<GroupChat>,
+    private val onGroupChatClick: (GroupChat) -> Unit
 ) : RecyclerView.Adapter<GroupChatAdapter.ViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -17,17 +17,24 @@ class GroupChatAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(groupChats[position], itemClick)
+        holder.bind(groupChats[position], onGroupChatClick)
     }
+
+
 
     override fun getItemCount() = groupChats.size
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val textView: TextView = itemView.findViewById(R.id.group_chat_name)
 
-        fun bind(groupChat: GroupChat, itemClick: (GroupChat) -> Unit) {
+        fun bind(groupChat: GroupChat, onGroupChatClick: (GroupChat) -> Unit) {
             textView.text = groupChat.name
-            itemView.setOnClickListener { itemClick(groupChat) }
+            itemView.setOnClickListener { onGroupChatClick(groupChat) }
         }
+    }
+
+    fun updateGroupChats(newGroupChats: List<GroupChat>) {
+        groupChats = newGroupChats
+        notifyDataSetChanged()
     }
 }

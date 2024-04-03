@@ -1,25 +1,35 @@
 package com.example.finalyearprojectdm
 
+import android.content.ContentValues.TAG
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import java.io.Serializable
 
 class ChatActivity : AppCompatActivity() {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var chatAdapter: ChatAdapter
-    private val chatMessages = mutableListOf<ChatMessage>()
+    private var chatMessages = mutableListOf<ChatMessage>()
 
     private lateinit var toolbar: Toolbar
+
+    private var itinerary: Itinerary? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,8 +42,23 @@ class ChatActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.title = ""
 
-        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-        chatAdapter = ChatAdapter(chatMessages, currentUserId)
+        // Initialize chatAdapter here
+        chatAdapter = ChatAdapter(chatMessages, FirebaseAuth.getInstance().currentUser?.uid ?: "", onProposalClick = { chatMessage ->
+            // Create a new BottomSheetDialog
+            val bottomSheetDialog = BottomSheetDialog(this)
+            val view = layoutInflater.inflate(R.layout.bottom_sheet_proposal, null)
+
+            // Set the itinerary details in the bottom sheet
+            val itinerary = chatMessage.itinerary
+            if (itinerary != null) {
+                view.findViewById<TextView>(R.id.bottom_dialog_title_text_view).text = itinerary.title
+                view.findViewById<TextView>(R.id.bottom_dialog_description_text_view).text = itinerary.description
+            }
+
+            bottomSheetDialog.setContentView(view)
+            bottomSheetDialog.show()
+        })
+
         recyclerView.adapter = chatAdapter
 
         loadChatMessages()
@@ -41,10 +66,11 @@ class ChatActivity : AppCompatActivity() {
         findViewById<Button>(R.id.send_message_button).setOnClickListener {
             val messageText = findViewById<EditText>(R.id.message_field).text.toString()
 
-            val message = ChatMessage(
-                text = messageText,
-                senderId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-            )
+            val message =
+                ChatMessage(
+                    text = messageText,
+                    senderId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+                )
 
             // Get a reference to the current group chat's messages subcollection
             val groupId = intent.getStringExtra("GROUP_ID") ?: return@setOnClickListener
@@ -54,13 +80,20 @@ class ChatActivity : AppCompatActivity() {
                     chatMessages.add(message)
                     chatAdapter.notifyDataSetChanged()
                     findViewById<EditText>(R.id.message_field).text.clear()
+
                 }
+        }
+
+        itinerary = intent.getSerializableExtra("itinerary") as? Itinerary
+        if (intent.getBooleanExtra("send_itinerary", false) && itinerary != null) {
+            sendItineraryProposal(itinerary!!)
         }
     }
 
+
+    //loading chat messages from Firestore.
     private fun loadChatMessages() {
         val groupId = intent.getStringExtra("GROUP_ID") ?: return
-        // Read from the group chat's messages subcollection
         FirebaseFirestore.getInstance().collection("groupChats").document(groupId)
             .collection("chatMessages")
             .get()
@@ -69,6 +102,25 @@ class ChatActivity : AppCompatActivity() {
                     val message = document.toObject(ChatMessage::class.java)
                     chatMessages.add(message)
                 }
+                chatAdapter.notifyDataSetChanged()
+            }
+    }
+
+    //send an itinerary proposal as a chat message.
+    private fun sendItineraryProposal(itinerary: Itinerary) {
+        val message = ChatMessage(
+            text = itinerary.title, // use the itinerary title as the message text
+            senderId = FirebaseAuth.getInstance().currentUser?.uid ?: "",
+            itinerary = itinerary
+        )
+
+        // Get the group ID from the intent. If it's null, return immediately.
+        val groupId = intent.getStringExtra("GROUP_ID") ?: return
+        // Add the message to the Firestore collection
+        FirebaseFirestore.getInstance().collection("groupChats").document(groupId)
+            .collection("chatMessages").add(message)
+            .addOnSuccessListener {
+                chatMessages.add(message)
                 chatAdapter.notifyDataSetChanged()
             }
     }
@@ -86,7 +138,9 @@ class ChatActivity : AppCompatActivity() {
                 true
             }
             R.id.back -> {
-                val intent = Intent (this, GroupChatActivity ::class.java)
+                val intent = Intent(this, GroupChatActivity::class.java)
+                // Pass the itinerary back to GroupChatActivity
+                intent.putExtra("itinerary", itinerary)
                 startActivity(intent)
                 true
             }
