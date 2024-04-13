@@ -15,5 +15,6 @@ data class Itinerary(
     var amountOfPersons: String = "",
     var thingsToDo: String = "",
 
-    var days: MutableList<DayItinerary> = mutableListOf()
+    var days: MutableList<DayItinerary> = mutableListOf(),
+    val comments: MutableList<Comment> = mutableListOf()
 ) : Serializable

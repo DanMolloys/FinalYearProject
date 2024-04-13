@@ -14,6 +14,27 @@
         android:gravity="center_horizontal"
         android:paddingBottom="8dp"/>
 
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/vote_green_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Approve"
+        android:backgroundTint="@color/green" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/add_comment_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Comment"
+        android:backgroundTint="@color/orange" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/vote_red_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Nope"
+        android:backgroundTint="@color/red" />
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -27,4 +48,5 @@
             android:gravity="center_horizontal"/>
 
     </ScrollView>
+
 </LinearLayout>

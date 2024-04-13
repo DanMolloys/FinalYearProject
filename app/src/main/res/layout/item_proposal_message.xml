@@ -17,5 +17,19 @@
             android:layout_height="wrap_content"
             android:textSize="16sp"
             android:textColor="#FFFFFF" />
+
+        <TextView
+            android:id="@+id/green_votes_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Green votes: 0"
+            android:textColor="@color/green" />
+
+        <TextView
+            android:id="@+id/red_votes_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Red votes: 0"
+            android:textColor="@color/red" />
     </LinearLayout>
 </FrameLayout>

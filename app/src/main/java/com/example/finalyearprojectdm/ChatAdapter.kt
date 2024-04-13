@@ -70,12 +70,20 @@ class ChatAdapter(
 
     class ProposalViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val proposalTitleTextView: TextView = view.findViewById(R.id.proposal_title_text_view)
+        private val greenVotesTextView: TextView = view.findViewById(R.id.green_votes_text_view)
+        private val redVotesTextView: TextView = view.findViewById(R.id.red_votes_text_view)
 
         fun bind(chatMessage: ChatMessage, onProposalClick: (ChatMessage) -> Unit) {
             proposalTitleTextView.text = chatMessage.itinerary?.title
             proposalTitleTextView.setOnClickListener {
                 onProposalClick(chatMessage)
             }
+
+            // Bind the votes to the TextViews
+            val greenVotes = chatMessage.votes.values.count { it == "green" }
+            val redVotes = chatMessage.votes.values.count { it == "red" }
+            greenVotesTextView.text = "Green votes: $greenVotes"
+            redVotesTextView.text = "Red votes: $redVotes"
         }
     }
 
