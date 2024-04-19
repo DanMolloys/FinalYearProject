@@ -1,7 +1,7 @@
 package com.example.finalyearprojectdm
 
 data class GroupChat(
-    val id: String = "",
+    var id: String = "",
     val name: String = "",
     val userIds: List<String> = listOf(),
     val creator: String = ""

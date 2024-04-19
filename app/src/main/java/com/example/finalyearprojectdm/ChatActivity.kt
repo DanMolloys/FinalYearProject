@@ -7,7 +7,6 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -17,13 +16,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
-import java.io.Serializable
 import java.util.UUID
 
 class ChatActivity : AppCompatActivity() {
@@ -41,6 +38,8 @@ class ChatActivity : AppCompatActivity() {
 
     private var itinerary: Itinerary? = null
 
+    private var groupId: String? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chat)
@@ -55,58 +54,72 @@ class ChatActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.title = ""
 
-
-
-        // Initialize chatAdapter here
+        // Initialize the chat adapter with a click listener for proposals
         chatAdapter = ChatAdapter(chatMessages, FirebaseAuth.getInstance().currentUser?.uid ?: "", onProposalClick = { chatMessage ->
-            // Create a new BottomSheetDialog
             val bottomSheetDialog = BottomSheetDialog(this)
             val view = layoutInflater.inflate(R.layout.bottom_sheet_proposal, null)
 
             // Set the itinerary details in the bottom sheet
+            val titleTextView = view.findViewById<TextView>(R.id.bottom_dialog_title_text_view)
+            val descriptionTextView = view.findViewById<TextView>(R.id.bottom_dialog_description_text_view)
+            titleTextView.text = chatMessage.itineraryTitle ?: "No title"
+            descriptionTextView.text = chatMessage.itineraryDescription ?: "No description"
 
-
-            // Add click listeners for the voting buttons
             view.findViewById<Button>(R.id.vote_green_button).setOnClickListener {
                 castVote(chatMessage.id, "green")
-                bottomSheetDialog.dismiss()
             }
             view.findViewById<Button>(R.id.vote_red_button).setOnClickListener {
                 castVote(chatMessage.id, "red")
-                bottomSheetDialog.dismiss()
             }
-
             view.findViewById<Button>(R.id.add_comment_button).setOnClickListener {
-                showAddCommentDialog(chatMessage.id)
-                bottomSheetDialog.dismiss()
+                val chatMessageId = chatMessage.id  // Assuming chatMessage is available here
+                val itineraryId = chatMessage.itineraryId  // Assuming you have this field in ChatMessage
+                showAddCommentDialog(chatMessageId, itineraryId)
             }
 
             bottomSheetDialog.setContentView(view)
             bottomSheetDialog.show()
         })
 
+        groupId = intent.getStringExtra("GROUP_ID")
+
         recyclerView.adapter = chatAdapter
 
         loadChatMessages()
 
         findViewById<Button>(R.id.send_message_button).setOnClickListener {
-            val messageText = findViewById<EditText>(R.id.message_field).text.toString()
+            val messageText = findViewById<EditText>(R.id.message_field).text.toString().trim()
+            if (messageText.isEmpty()) {
+                Toast.makeText(this, "Message cannot be empty", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
 
-            val message =
+            val groupId = intent.getStringExtra("GROUP_ID") ?: return@setOnClickListener
+
+            // Check if itinerary details are to be sent
+            val message = itinerary?.let {
                 ChatMessage(
                     text = messageText,
-                    senderId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+                    senderId = FirebaseAuth.getInstance().currentUser?.uid ?: "",
+                    itineraryTitle = it.title,
+                    itineraryDescription = it.description,
+                    itineraryId = it.id.toString()
                 )
+            } ?: ChatMessage(
+                text = messageText,
+                senderId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+            )
 
-            // Get a reference to the current group chat's messages subcollection
-            val groupId = intent.getStringExtra("GROUP_ID") ?: return@setOnClickListener
+            // Send the message to Firestore
             FirebaseFirestore.getInstance().collection("groupChats").document(groupId)
                 .collection("chatMessages").add(message)
                 .addOnSuccessListener {
-                    chatMessages.add(message)
-                    chatAdapter.notifyDataSetChanged()
                     findViewById<EditText>(R.id.message_field).text.clear()
-
+                    Toast.makeText(this, "Message sent", Toast.LENGTH_SHORT).show()
+                }
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "Failed to send message: ", e)
+                    Toast.makeText(this, "Failed to send message", Toast.LENGTH_SHORT).show()
                 }
         }
 
@@ -122,51 +135,64 @@ class ChatActivity : AppCompatActivity() {
     }
 
 
+
     //loading chat messages from Firestore.
     //using snapshot so when vote is added, the UI will update automatically.
     private fun loadChatMessages() {
         val groupId = intent.getStringExtra("GROUP_ID") ?: return
-        FirebaseFirestore.getInstance().collection("groupChats").document(groupId)
+        firestore.collection("groupChats").document(groupId)
             .collection("chatMessages")
-            .orderBy("timestamp") // Optional: sort messages by timestamp
+            .orderBy("timestamp")
             .addSnapshotListener { querySnapshot, firebaseFirestoreException ->
                 if (firebaseFirestoreException != null) {
                     Log.w(TAG, "Listen failed.", firebaseFirestoreException)
                     return@addSnapshotListener
                 }
-
-                if (querySnapshot != null) {
-                    chatMessages.clear() // Clear the old list
-                    for (document in querySnapshot.documents) {
-                        val message = document.toObject(ChatMessage::class.java)
-                        if (message != null) {
-                            message.id = document.id // Save the document ID in the message
-                            chatMessages.add(message)
-                        }
+                val newMessages = querySnapshot?.documents?.mapNotNull { document ->
+                    document.toObject(ChatMessage::class.java)?.apply {
+                        id = document.id // This sets the ChatMessage id
+                        // The Itinerary id should already be set if it was saved correctly
                     }
-                    chatAdapter.notifyDataSetChanged()
-                }
+                }.orEmpty()
+
+                chatMessages.clear()
+                chatMessages.addAll(newMessages)
+                chatAdapter.notifyDataSetChanged()
+
             }
     }
+
+
+
 
     //send an itinerary proposal as a chat message.
     private fun sendItineraryProposal(itinerary: Itinerary) {
+        if (itinerary.id.isNullOrEmpty()) {
+            Log.e(TAG, "Itinerary ID is null or empty.")
+            return
+        }
+
         val message = ChatMessage(
-            text = itinerary.title, // use the itinerary title as the message text
+            text = itinerary.title,
             senderId = FirebaseAuth.getInstance().currentUser?.uid ?: "",
-            itinerary = itinerary
+            itineraryTitle = itinerary.title,
+            itineraryDescription = itinerary.description,
+            itineraryId = itinerary.id
         )
 
-        // Get the group ID from the intent. If it's null, return immediately.
         val groupId = intent.getStringExtra("GROUP_ID") ?: return
-        // Add the message to the Firestore collection
         FirebaseFirestore.getInstance().collection("groupChats").document(groupId)
             .collection("chatMessages").add(message)
             .addOnSuccessListener {
-                chatMessages.add(message)
-                chatAdapter.notifyDataSetChanged()
+                Toast.makeText(this, "Itinerary proposal sent successfully", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Failed to send itinerary proposal: ", e)
+                Toast.makeText(this, "Failed to send itinerary proposal", Toast.LENGTH_SHORT).show()
             }
     }
+
+
 
 
     //maybe use Firebase Transactions?
@@ -193,7 +219,7 @@ class ChatActivity : AppCompatActivity() {
             }
     }
 
-    private fun showAddCommentDialog(messageId: String) {
+    private fun showAddCommentDialog(messageId: String, itineraryId: String?) {
         val view = layoutInflater.inflate(R.layout.dialog_add_comment, null)
         val commentField = view.findViewById<EditText>(R.id.comment_field)
         val commitButton = view.findViewById<Button>(R.id.commit)
@@ -206,51 +232,72 @@ class ChatActivity : AppCompatActivity() {
 
         commitButton.setOnClickListener {
             val commentText = commentField.text.toString()
-            addComment(messageId, commentText)
+            // Now also pass groupId to the addComment function
+            if (groupId != null) {
+                addComment(messageId, commentText, itineraryId, groupId!!)
+            } else {
+                Toast.makeText(this, "Group ID is not available", Toast.LENGTH_SHORT).show()
+            }
             dialog.dismiss()
         }
 
         dialog.show()
     }
 
-    private fun addComment(messageId: String, commentText: String) {
-        val user = firebaseAuth.currentUser
-        if (user != null) {
-            val groupId = intent.getStringExtra("GROUP_ID") ?: return
 
-            // Create a Comment object
-            val comment = Comment(
-                userId = user.uid,
-                userName = user.displayName ?: "", // replace with actual user name
-                groupId = groupId,
-                groupName = "", // replace with actual group name
-                text = commentText
-            )
+    private fun addCommentToItinerary(comment: Comment, itineraryId: String) {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        // Use the user ID to reference the correct path for itineraries subcollection
+        val itineraryCommentsRef = firestore.collection("users").document(userId)
+            .collection("itineraries").document(itineraryId)
+            .collection("comments")
 
-            // Add comment to the chat message
-            val messageCommentRef = FirebaseFirestore.getInstance().collection("groupChats").document(groupId)
-                .collection("chatMessages").document(messageId)
+        // Add the comment to the Itinerary's 'comments' subcollection
+        itineraryCommentsRef.add(comment)
+            .addOnSuccessListener {
+                Log.d(TAG, "Comment added successfully to itinerary: $itineraryId")
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Error adding comment to itinerary $itineraryId", e)
+            }
+    }
 
-            messageCommentRef.update("comments", FieldValue.arrayUnion(comment))
-                .addOnSuccessListener {
-                    Toast.makeText(this, "Comment added successfully to chat message", Toast.LENGTH_SHORT).show()
+    private fun addComment(messageId: String, commentText: String, itineraryId: String?, groupId: String) {
+        val userId = firebaseAuth.currentUser?.uid
+        if (userId != null) {
+            // Retrieve the group name from Firestore
+            firestore.collection("groupChats").document(groupId)
+                .get()
+                .addOnSuccessListener { documentSnapshot ->
+                    val groupName = documentSnapshot.getString("name") ?: "Unnamed Group"
+
+                    val comment = Comment(
+                        userId = userId,
+                        groupId = groupId,
+                        groupName = groupName,
+                        text = commentText
+                    )
+
+                    // Proceed to add the comment to the ChatMessage
+                    val messageCommentRef = firestore.collection("groupChats").document(groupId)
+                        .collection("chatMessages").document(messageId)
+
+                    messageCommentRef.update("comments", FieldValue.arrayUnion(comment))
+                        .addOnSuccessListener {
+                            Log.d(TAG, "Comment added successfully to chat message")
+                            if (!itineraryId.isNullOrEmpty()) {
+                                // Then, add the comment to the itinerary
+                                addCommentToItinerary(comment, itineraryId)
+                            } else {
+                                Log.e(TAG, "Itinerary ID is null or empty.")
+                            }
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e(TAG, "Error adding comment to chat message", e)
+                        }
                 }
                 .addOnFailureListener { e ->
-                    Log.e(TAG, "Error adding comment to chat message", e)
-                    Toast.makeText(this, "Failed to add comment to chat message", Toast.LENGTH_SHORT).show()
-                }
-
-            // Add comment to the original Itinerary, still not fully working
-            val itineraryRef = FirebaseFirestore.getInstance().collection("users").document(user.uid)
-                .collection("itineraries").document(itinerary?.id ?: return)
-
-            itineraryRef.update("comments", FieldValue.arrayUnion(comment))
-                .addOnSuccessListener {
-                    Toast.makeText(this, "Comment added successfully to itinerary", Toast.LENGTH_SHORT).show()
-                }
-                .addOnFailureListener { e ->
-                    Log.e(TAG, "Error adding comment to itinerary", e)
-                    Toast.makeText(this, "Failed to add comment to itinerary", Toast.LENGTH_SHORT).show()
+                    Log.e(TAG, "Error fetching group chat name", e)
                 }
         } else {
             Toast.makeText(this, "No user is logged in", Toast.LENGTH_SHORT).show()

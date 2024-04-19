@@ -56,6 +56,10 @@ class ItineraryDetailsActivity : AppCompatActivity() {
 
         val itinerary = intent.getSerializableExtra("itinerary") as? Itinerary
 
+        if (itinerary != null) {
+            Log.d(TAG, "Itinerary ID: ${itinerary.id}")
+        }
+
         val destinationAirportCode = itinerary?.airportCode
 
         /*
@@ -158,6 +162,16 @@ class ItineraryDetailsActivity : AppCompatActivity() {
                 Toast.makeText(this, "Itinerary details not found", Toast.LENGTH_SHORT).show()
             }
         }
+
+        val editItineraryButton: Button = findViewById(R.id.edit_itinerary_button)
+        editItineraryButton.setOnClickListener {
+            val itinerary = intent.getSerializableExtra("itinerary") as? Itinerary
+            if (itinerary != null) {
+                showEditItineraryDialog(itinerary)
+            } else {
+                Toast.makeText(this, "Itinerary details not found", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     //update the title of an itinerary in Firestore.
@@ -224,25 +238,147 @@ class ItineraryDetailsActivity : AppCompatActivity() {
         val message = ChatMessage(
             text = itinerary.title,
             senderId = FirebaseAuth.getInstance().currentUser?.uid ?: "",
-            itinerary = itinerary
+            itineraryTitle = itinerary.title,
+            itineraryDescription = itinerary.description,
+            itineraryId = itinerary.id.toString()  // Ensure this is correctly populated
         )
 
         // Send the message to the Firestore collection for the selected group chat
         FirebaseFirestore.getInstance().collection("groupChats").document(groupChat.id)
             .collection("chatMessages").add(message)
             .addOnSuccessListener {
-                Toast.makeText(
-                    this,
-                    "Itinerary sent to group chat successfully",
-                    Toast.LENGTH_SHORT
-                ).show()
+                // Show a toast with the Itinerary ID included
+                Toast.makeText(this, "Itinerary sent to group chat successfully, ID: ${itinerary.id}", Toast.LENGTH_LONG).show()
             }
             .addOnFailureListener { e ->
-                Toast.makeText(this, "Failed to send itinerary to group chat", Toast.LENGTH_SHORT)
-                    .show()
+                Toast.makeText(this, "Failed to send itinerary to group chat", Toast.LENGTH_SHORT).show()
                 Log.e(TAG, "Error sending itinerary to group chat", e)
             }
     }
+
+
+    private fun showEditItineraryDialog(itinerary: Itinerary) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_edit_itinerary, null)
+        val titleEditText: EditText = dialogView.findViewById(R.id.edit_itinerary_title)
+        val daysRecyclerView: RecyclerView = dialogView.findViewById(R.id.RecyclerView1)
+        val commentsRecyclerView: RecyclerView = dialogView.findViewById(R.id.comments_recycler_view)
+        val saveButton: Button = dialogView.findViewById(R.id.save_changes_button)
+
+        titleEditText.setText(itinerary.title)
+
+        // Setup RecyclerView for days
+        val daysAdapter = DayAdapter(itinerary.days.toMutableList()) { updatedDay ->
+            updateDayInFirebase(itinerary.id, updatedDay, itinerary.days)
+        }
+        daysRecyclerView.layoutManager = LinearLayoutManager(this)
+        daysRecyclerView.adapter = daysAdapter
+
+        // Setup RecyclerView for comments
+        commentsRecyclerView.layoutManager = LinearLayoutManager(this)
+        val commentsAdapter = CommentsAdapter(mutableListOf())  // Assuming CommentsAdapter exists
+        commentsRecyclerView.adapter = commentsAdapter
+        loadComments(itinerary.id, commentsAdapter) // Assuming loadComments method exists
+
+        // AlertDialog setup
+        val alertDialog = AlertDialog.Builder(this)
+            .setTitle("Edit Itinerary Details")
+            .setView(dialogView)
+            .setNegativeButton("Cancel", null)
+            .create()
+
+        saveButton.setOnClickListener {
+            val newTitle = titleEditText.text.toString().trim()
+            if (itinerary.title != newTitle || daysAdapter.hasChanges) {
+                updateItinerary(itinerary.id, newTitle, daysAdapter.days)
+                updateItineraryDescription(itinerary.id, daysAdapter.days)  // Ensure description is updated too
+            }
+            alertDialog.dismiss()
+        }
+
+        alertDialog.show()
+    }
+
+
+
+
+    private fun updateItinerary(itineraryId: String, newTitle: String, days: List<DayItinerary>) {
+        // Update the whole itinerary including the combined description
+        val combinedDescription = days.sortedBy { it.dayNumber }
+            .joinToString("\n") { "Day ${it.dayNumber}: ${it.description}" }
+        val updates = mapOf("title" to newTitle, "description" to combinedDescription)
+
+        firestore.collection("users").document(firebaseAuth.currentUser!!.uid)
+            .collection("itineraries").document(itineraryId)
+            .update(updates)
+            .addOnSuccessListener {
+                Toast.makeText(this, "Itinerary updated successfully", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "Error updating itinerary: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+
+
+    private fun loadComments(itineraryId: String, adapter: CommentsAdapter) {
+        val userId = firebaseAuth.currentUser?.uid
+        if (userId != null) {
+            firestore.collection("users").document(userId)
+                .collection("itineraries").document(itineraryId)
+                .collection("comments")
+                .get()
+                .addOnSuccessListener { snapshot ->
+                    val newComments = snapshot.documents.mapNotNull { doc ->
+                        doc.toObject(Comment::class.java)
+                    }
+                    adapter.updateComments(newComments)  // Update your adapter with the new list
+                }
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "Error loading comments: ", e)
+                }
+        }
+    }
+
+
+    private fun updateDayInFirebase(itineraryId: String, updatedDay: DayItinerary, days: MutableList<DayItinerary>) {
+        // Logic to update a single day in Firebase
+        val dayRef = firestore.collection("users").document(firebaseAuth.currentUser!!.uid)
+            .collection("itineraries").document(itineraryId)
+            .collection("days").document("Day ${updatedDay.dayNumber}")
+
+        dayRef.update("description", updatedDay.description)
+            .addOnSuccessListener {
+                Log.d(TAG, "Day updated successfully in Firestore.")
+                // Update the corresponding day in the days list with the updatedDay
+                val index = days.indexOfFirst { it.dayNumber == updatedDay.dayNumber }
+                if (index != -1) {
+                    days[index] = updatedDay
+                }
+                updateItineraryDescription(itineraryId, days)
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Error updating day in Firestore.", e)
+            }
+    }
+
+    private fun updateItineraryDescription(itineraryId: String, days: MutableList<DayItinerary>) {
+        val combinedDescription = days.sortedBy { it.dayNumber }
+            .joinToString("\n") { "Day ${it.dayNumber}: ${it.description}" }
+
+        val itineraryRef = firestore.collection("users").document(firebaseAuth.currentUser?.uid ?: "")
+            .collection("itineraries").document(itineraryId)
+
+        itineraryRef.update("description", combinedDescription)
+            .addOnSuccessListener {
+                Toast.makeText(this, "Itinerary description updated successfully.", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "Error updating itinerary description.", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+
+
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.main_back_menu, menu)

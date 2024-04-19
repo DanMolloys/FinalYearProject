@@ -77,14 +77,16 @@ class StoredProposalsActivity : AppCompatActivity() {
                 .addOnSuccessListener { result ->
                     val itineraries = result.documents.map { doc ->
                         val itinerary = Itinerary().apply {
+                            id = doc.id // Setting the document ID as the Itinerary ID
                             title = doc.getString("title") ?: ""
                             description = doc.getString("description") ?: ""
+                            // Additional fields can be added here as needed
                         }
-                        // Retrieve the day-by-day itinerary
+                        // Retrieve the day-by-day itinerary details
                         firestore.collection("users").document(user.uid).collection("itineraries").document(doc.id).collection("days")
                             .get()
-                            .addOnSuccessListener { result ->
-                                val days = result.documents.map { dayDoc ->
+                            .addOnSuccessListener { daysResult ->
+                                val days = daysResult.documents.map { dayDoc ->
                                     DayItinerary().apply {
                                         dayNumber = dayDoc.getLong("dayNumber")?.toInt() ?: 0
                                         description = dayDoc.getString("description") ?: ""
@@ -97,12 +99,13 @@ class StoredProposalsActivity : AppCompatActivity() {
                     setupRecyclerView(itineraries)
                 }
                 .addOnFailureListener { e ->
-                    // Handle the error here
+                    // Handle the error here, such as logging or displaying an error message
                 }
         } else {
-            // No user is logged in
+            // Handle the case where no user is logged in
         }
     }
+
 
     private fun showConfirmDialog() {
         if (selectedItems.size != 2) return

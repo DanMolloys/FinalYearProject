@@ -8,7 +8,9 @@ data class ChatMessage(
     val text: String = "",
     val senderId: String = "",
     val timestamp: Date = Date(),
-    val itinerary: Itinerary? = null,
+    val itineraryTitle: String? = null,
+    val itineraryDescription: String? = null,
+    val itineraryId: String? = null,
     var votes: MutableMap<String, String> = mutableMapOf(),
     var comments: MutableList<Comment> = mutableListOf()
 ) : Serializable

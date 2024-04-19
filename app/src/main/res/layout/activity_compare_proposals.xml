@@ -52,6 +52,7 @@
                         android:backgroundTint="@color/grey"
                         android:background="@drawable/text_view_background"/>
 
+
                     <LinearLayout
                         android:id="@+id/breakdownContainer1"
                         android:layout_width="match_parent"

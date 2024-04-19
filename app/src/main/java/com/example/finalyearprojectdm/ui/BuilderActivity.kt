@@ -25,6 +25,7 @@ import com.example.finalyearprojectdm.utils.Constants.RECEIVE_ID
 import com.example.finalyearprojectdm.utils.Constants.SEND_ID
 import com.example.finalyearprojectdm.utils.Time
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 
 import kotlinx.coroutines.Dispatchers
@@ -55,7 +56,9 @@ class BuilderActivity : AppCompatActivity() {
 
     private lateinit var toolbar: Toolbar
 
-
+    companion object {
+        const val TAG = "ItineraryDebug"
+    }
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -140,7 +143,7 @@ class BuilderActivity : AppCompatActivity() {
 
 
     private fun genItinerary(message: String) {
-        val apiKey = "key"
+        val apiKey = "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"
 
         val thingsToDo = Holiday.thingsToDo.joinToString(", ")
 
@@ -267,44 +270,52 @@ class BuilderActivity : AppCompatActivity() {
     private fun addItineraryToFirestore(itinerary: Itinerary) {
         val user = firebaseAuth.currentUser
         if (user != null) {
+            // First, create a new document reference with an automatic ID.
+            val docRef = firestore.collection("users").document(user.uid).collection("itineraries").document()
+
+            // Assign the generated document ID to the itinerary object's 'id' field.
+            itinerary.id = docRef.id
+
+            // Prepare a map of itinerary data, including the newly set 'itineraryId'.
             val itineraryMap = hashMapOf(
+                "itineraryId" to itinerary.id,
                 "title" to itinerary.title,
                 "description" to itinerary.description,
                 "startingLocation" to Holiday.startingLocation,
                 "startDate" to Holiday.startDate.toString(),
                 "budget" to Holiday.budget.toString(),
                 "amountOfPersons" to Holiday.amountOfPersons.toString(),
-                "thingsToDo" to Holiday.thingsToDo.toString(),
+                "thingsToDo" to Holiday.thingsToDo.joinToString(", "),
                 "airportCode" to itinerary.airportCode
             )
 
-            val itinerariesRef = firestore.collection("users").document(user.uid).collection("itineraries")
-            itinerariesRef.add(itineraryMap)
-                .addOnSuccessListener { documentReference ->
-                    // Set the ID of the Itinerary to the ID of the document
-                    itinerary.id = documentReference.id
+            // Set the document with the map of data.
+            docRef.set(itineraryMap)
+                .addOnSuccessListener {
+                    Log.d(TAG, "Itinerary added with ID: ${itinerary.id}") // Log statement added
+                    Toast.makeText(this, "Itinerary added with ID: ${itinerary.id}", Toast.LENGTH_SHORT).show()
 
-                    // Add each day to the newly added itinerary.
+                    // After the itinerary document is successfully written, add each day as a subdocument.
                     for (day in itinerary.days) {
                         val dayMap = hashMapOf(
                             "dayNumber" to day.dayNumber,
                             "description" to day.description
                         )
-                        itinerariesRef.document(documentReference.id).collection("days")
-                            .add(dayMap)
+                        docRef.collection("days").add(dayMap)
                             .addOnSuccessListener {
                                 Toast.makeText(this, "Day added successfully", Toast.LENGTH_SHORT).show()
                             }
                             .addOnFailureListener { e ->
-                                customMessage("Error adding day: ${e.message}")
+                                Log.e("FirestoreError", "Error adding day: ${e.message}")
                             }
                     }
                 }
                 .addOnFailureListener { e ->
-                    customMessage("Error adding itinerary: ${e.message}")
+                    Toast.makeText(this, "Error adding itinerary: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
         } else {
             Toast.makeText(this, "No user is logged in", Toast.LENGTH_SHORT).show()
         }
     }
+
 }
