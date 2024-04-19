@@ -143,7 +143,7 @@ class BuilderActivity : AppCompatActivity() {
 
 
     private fun genItinerary(message: String) {
-        val apiKey = "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"
+        val apiKey = "ss"
 
         val thingsToDo = Holiday.thingsToDo.joinToString(", ")
 
