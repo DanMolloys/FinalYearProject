@@ -6,14 +6,17 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Button
+import android.widget.ImageView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.finalyearprojectdm.databinding.ActivityStoredproposalsBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import java.util.Locale
 
 class StoredProposalsActivity : AppCompatActivity() {
 
@@ -69,6 +72,23 @@ class StoredProposalsActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupRecyclerView(itineraries: List<Itinerary>) {
+        adapter = StoredProposalsAdapter(
+            itineraries,
+            { itinerary ->
+                val intent = Intent(this, ItineraryDetailsActivity::class.java)
+                intent.putExtra("itinerary", itinerary)
+                startActivity(intent)
+            },
+            selectionMode,
+            selectedItems,
+            ::showConfirmDialog,
+            this
+        )
+        recyclerView.adapter = adapter
+    }
+
+
     private fun loadItineraries() {
         val user = firebaseAuth.currentUser
         if (user != null) {
@@ -80,6 +100,7 @@ class StoredProposalsActivity : AppCompatActivity() {
                             id = doc.id // Setting the document ID as the Itinerary ID
                             title = doc.getString("title") ?: ""
                             description = doc.getString("description") ?: ""
+                            startingLocation = doc.getString("startingLocation") ?: ""
                             // Additional fields can be added here as needed
                         }
                         // Retrieve the day-by-day itinerary details
@@ -133,17 +154,21 @@ class StoredProposalsActivity : AppCompatActivity() {
         negativeButton.setTextColor(Color.BLUE)
     }
 
-    private fun setupRecyclerView(itineraries: List<Itinerary>) {
-        adapter = StoredProposalsAdapter(
-            itineraries,
-            { itinerary ->
-                // Handle item click here
-            },
-            selectionMode,
-            selectedItems,
-            ::showConfirmDialog
-        )
-        recyclerView.adapter = adapter
+    fun getCountryCode(countryName: String): String? {
+        val countryNameLowercase = countryName.lowercase(Locale.getDefault())
+        return Locale.getISOCountries().find {
+            Locale("", it).getDisplayCountry(Locale.getDefault()).lowercase() == countryNameLowercase
+        }
     }
+
+    fun loadFlagIntoImageView(imageView: ImageView, countryCode: String) {
+        val flagUrl = "https://flagsapi.com/$countryCode/flat/64.png"
+        Glide.with(this)
+            .load(flagUrl)
+            .placeholder(R.drawable.baseline_flag_24) // A default placeholder if needed
+            .error(R.drawable.baseline_flag_24) // An error placeholder if the load fails
+            .into(imageView)
+    }
+
 }
 

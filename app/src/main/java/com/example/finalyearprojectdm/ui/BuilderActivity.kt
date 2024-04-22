@@ -190,6 +190,8 @@ class BuilderActivity : AppCompatActivity() {
             val response = client.newCall(request).execute()
             val result = response.body?.string()
 
+            Log.d("API Response", result ?: "No response")
+
             withContext(Dispatchers.Main) {
                 val jsonObject = JSONObject(result)
                 var text = jsonObject.getJSONArray("choices").getJSONObject(0).getString("text")

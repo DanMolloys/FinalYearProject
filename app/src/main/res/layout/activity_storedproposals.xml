@@ -31,6 +31,7 @@
         android:id="@+id/btnCompare"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:background="@color/blue"
         android:text="Compare"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
