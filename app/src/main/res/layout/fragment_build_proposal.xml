@@ -1,0 +1,38 @@
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    tools:context=".BuildProposalFragment">
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/buttonBuildNew"
+        android:layout_width="220dp"
+        android:layout_height="300dp"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/button_background"
+        android:drawableTop="@drawable/picture1"
+        android:fontFamily="@font/bloggersans"
+        android:text="Build Proposal"
+        android:textSize="40sp"
+        android:gravity="bottom|center_horizontal"
+        android:textColor="@android:color/black"
+        android:layout_margin="16dp"
+        android:paddingTop="16dp"
+        android:drawablePadding="10dp"/>
+
+    <TextView
+        android:id="@+id/textDescription"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start building your dream itinerary with the help of Globe"
+        android:textSize="30sp"
+        android:fontFamily="@font/bloggersans"
+        android:layout_centerHorizontal="true"
+        android:gravity="center"
+        android:layout_gravity="center_horizontal|bottom"
+        android:textColor="@android:color/black"
+        android:layout_marginBottom="80dp"/>
+</FrameLayout>

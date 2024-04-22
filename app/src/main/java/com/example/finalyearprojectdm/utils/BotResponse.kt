@@ -68,7 +68,7 @@ object BotResponse {
             userInputIsCountry -> {
                 // Set value
                 Holiday.startingLocation = message
-                "Great choice! So we're thinking " + Holiday.startingLocation + ". When would you like to go!"
+                "Great choice! So we're thinking " + Holiday.startingLocation + ". When would you like to go! \n(DD/MM/YYYY)"
             }
 
             dateMatcher.find() -> {
@@ -76,7 +76,7 @@ object BotResponse {
                 // Parse the found date into a LocalDate object
                 val date = LocalDate.parse(foundDate, dateFormatter)
                 Holiday.startDate = date
-                "Okay so on the " + Holiday.startDate + ". What is your budget for the trip?"
+                "Okay so on the " + Holiday.startDate + ". What is your budgeted spending money for the trip? \n(100.00)"
             }
 
             doubleMatcher.find() -> {

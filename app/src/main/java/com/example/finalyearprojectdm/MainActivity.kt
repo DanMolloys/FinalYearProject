@@ -12,16 +12,64 @@ import com.example.finalyearprojectdm.databinding.ActivityMainBinding
 import com.example.finalyearprojectdm.ui.BuilderActivity
 import com.google.firebase.auth.FirebaseAuth
 import android.Manifest
+import android.os.Handler
+import android.os.Looper
+import androidx.viewpager2.widget.ViewPager2
+import me.relex.circleindicator.CircleIndicator3
+import java.util.Timer
+import java.util.TimerTask
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding:ActivityMainBinding
     private lateinit var firebaseAuth: FirebaseAuth
-
     private lateinit var toolbar: Toolbar
+
+    private lateinit var viewPager: ViewPager2
+    private val handler = Handler(Looper.getMainLooper())
+    private var timer: Timer? = null
 
 
     private val PERMISSION_REQUEST_CODE = 1234
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        firebaseAuth = FirebaseAuth.getInstance()
+
+        toolbar = findViewById(R.id.toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.title = ""
+
+        viewPager = findViewById(R.id.viewPager)
+        viewPager.adapter = ScreenSlidePagerAdapter(this)
+        setupAutoScroll()
+
+        val indicator: CircleIndicator3 = findViewById(R.id.indicator)
+        indicator.setViewPager(viewPager)
+
+        if (checkPermissions()) {
+            val intent = Intent(this, LocationService::class.java)
+            startService(intent)
+        } else {
+            requestPermissions()
+        }
+    }
+    
+    private fun setupAutoScroll() {
+        val runnable = Runnable {
+            val currentItem = viewPager.currentItem
+            viewPager.currentItem = (currentItem + 1) % 3 // There are 3 pages
+        }
+        timer = Timer()
+        timer?.schedule(object : TimerTask() {
+            override fun run() {
+                handler.post(runnable)
+            }
+        }, 15000, 15000) // delay, period
+    }
 
     private fun checkPermissions(): Boolean {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
@@ -48,50 +96,10 @@ class MainActivity : AppCompatActivity() {
                 val intent = Intent(this, LocationService::class.java)
                 startService(intent)
             } else {
-                // permissions were denied
+                // permission denied
             }
             return
         }
-    }
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        firebaseAuth = FirebaseAuth.getInstance()
-
-        toolbar = findViewById(R.id.toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar?.title = ""
-
-        // Start the LocationService
-        if (checkPermissions()) {
-            // permissions already granted, start the location service
-            val intent = Intent(this, LocationService::class.java)
-            startService(intent)
-        } else {
-            // permissions not granted, request them
-            requestPermissions()
-        }
-
-
-
-        binding.buttonChatBuilder.setOnClickListener {
-            val intent = Intent(this, BuilderActivity :: class.java)
-            startActivity(intent)
-        }
-
-        binding.buttonCurrentPro.setOnClickListener {
-            val intent = Intent(this, StoredProposalsActivity :: class.java)
-            startActivity(intent)
-        }
-
-        binding.buttonGroupChat.setOnClickListener {
-            val intent = Intent(this, GroupChatActivity :: class.java)
-            startActivity(intent)
-        }
-
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

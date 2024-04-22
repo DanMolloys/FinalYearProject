@@ -11,7 +11,7 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/purple"
+        android:background="@color/blue"
         android:layout_alignParentTop="true" />
 
     <LinearLayout
@@ -19,7 +19,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="@color/purple"
+        android:background="@color/blue"
         android:orientation="horizontal"
         tools:viewBindingIgnore="true" >
 
@@ -73,7 +73,7 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="10dp"
-        android:background="#42A5F5"
+        android:background="@color/blue"
         android:id="@+id/dark_divider"/>
 
 </RelativeLayout>

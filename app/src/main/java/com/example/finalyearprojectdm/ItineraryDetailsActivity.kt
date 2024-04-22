@@ -36,10 +36,8 @@ import okhttp3.Request
 class ItineraryDetailsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityItineraryDetailsBinding
-
     private lateinit var firestore: FirebaseFirestore
     private lateinit var firebaseAuth: FirebaseAuth
-
     private lateinit var toolbar: Toolbar
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,9 +58,9 @@ class ItineraryDetailsActivity : AppCompatActivity() {
             Log.d(TAG, "Itinerary ID: ${itinerary.id}")
         }
 
-        val destinationAirportCode = itinerary?.airportCode
 
         /*
+        val destinationAirportCode = itinerary?.airportCode
         val client = OkHttpClient()
 
         val request = Request.Builder()
@@ -108,8 +106,7 @@ class ItineraryDetailsActivity : AppCompatActivity() {
                 Log.e("API_REQUEST_ERROR", "Failed to execute request", e)
             }
         }
-
-         */
+        */
 
 
         // Display the itinerary title and details

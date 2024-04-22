@@ -143,7 +143,7 @@ class BuilderActivity : AppCompatActivity() {
 
 
     private fun genItinerary(message: String) {
-        val apiKey = "ss"
+        val apiKey = ""
 
         val thingsToDo = Holiday.thingsToDo.joinToString(", ")
 
@@ -154,7 +154,7 @@ class BuilderActivity : AppCompatActivity() {
                 " - Number of People: " + Holiday.amountOfPersons +
                 " - Budget: " + Holiday.budget +
                 " - Interests: " + thingsToDo +
-        "Please provide a 5-day itinerary, keeping each day's description within 100 words to fit the total within 500 words. Follow the format below:" +
+        "Please provide a 5-day itinerary, keeping each day's description within 100 words to fit the total within 500 words. Follow the format below: " +
                 "Day 1: " +
                 "Date: [Date]" +
                 "Destination: [City (Airport Code)]" +
