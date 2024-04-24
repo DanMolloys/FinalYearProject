@@ -25,7 +25,8 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:text="Create Group Chat"
-        android:background="@color/purple"
+        android:background="@drawable/button_rounded"
+        android:fontFamily="@font/bloggersans"
         android:textColor="@android:color/black" />
 
 </RelativeLayout>

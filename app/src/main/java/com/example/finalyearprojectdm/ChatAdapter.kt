@@ -7,10 +7,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
+import com.bumptech.glide.Glide
 
 
 class ChatAdapter(
@@ -48,9 +50,8 @@ class ChatAdapter(
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val message = chatMessages[position]
-        Log.d(TAG, "Binding message")
         when (holder.itemViewType) {
-            VIEW_TYPE_MESSAGE_SENT, VIEW_TYPE_MESSAGE_RECEIVED -> {  // Handle both sent and received messages
+            VIEW_TYPE_MESSAGE_SENT, VIEW_TYPE_MESSAGE_RECEIVED -> {
                 (holder as MessageViewHolder).bind(message)
             }
             VIEW_TYPE_PROPOSAL -> {
@@ -58,6 +59,7 @@ class ChatAdapter(
             }
         }
     }
+
 
 
     override fun getItemCount(): Int = chatMessages.size
@@ -75,18 +77,23 @@ class ChatAdapter(
 
     class MessageViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val messageTextView: TextView = view.findViewById(R.id.message_text)
+        private val profileImageView: ImageView = view.findViewById(R.id.profile_image)
 
         fun bind(chatMessage: ChatMessage) {
             messageTextView.text = chatMessage.text
-            // Additional binding logic for regular messages if needed
+            profileImageView.setImageResource(chatMessage.imageResourceId)
         }
     }
+
 
     class ProposalViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val proposalTitleTextView: TextView = view.findViewById(R.id.proposal_title_text_view)
         //private val proposalDescriptionTextView: TextView = view.findViewById(R.id.proposal_description_text_view) // Assuming you add this view
+        private val greenVotesImageView: ImageView = view.findViewById(R.id.green_vote_image)
+        private val redVotesImageView: ImageView = view.findViewById(R.id.red_vote_image)
         private val greenVotesTextView: TextView = view.findViewById(R.id.green_votes_text_view)
         private val redVotesTextView: TextView = view.findViewById(R.id.red_votes_text_view)
+
 
         fun bind(chatMessage: ChatMessage, onProposalClick: (ChatMessage) -> Unit) {
             // Use the new fields instead of an Itinerary object
@@ -98,10 +105,8 @@ class ChatAdapter(
             }
 
             // Bind the votes to the TextViews
-            val greenVotes = chatMessage.votes.values.count { it == "green" }
-            val redVotes = chatMessage.votes.values.count { it == "red" }
-            greenVotesTextView.text = "Green votes: $greenVotes"
-            redVotesTextView.text = "Red votes: $redVotes"
+            greenVotesTextView.text = chatMessage.votes.count { it.value == "green" }.toString()
+            redVotesTextView.text = chatMessage.votes.count { it.value == "red" }.toString()
         }
     }
 

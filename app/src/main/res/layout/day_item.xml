@@ -6,7 +6,7 @@
     android:layout_margin="8dp"
     app:cardCornerRadius="8dp"
     app:cardElevation="4dp"
-    android:background="@color/grey">
+    android:background="@color/white">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -20,6 +20,8 @@
             android:layout_height="wrap_content"
             android:textSize="18sp"
             android:textStyle="bold"
+            android:textColor="@color/black"
+            android:fontFamily="@font/bloggersans"
             android:clickable="true"
             android:focusable="true"/>
 
@@ -27,6 +29,8 @@
             android:id="@+id/dayDescription"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="@color/black"
+            android:fontFamily="@font/bloggersans"
             android:inputType="textMultiLine"
             android:textSize="16sp"
             android:visibility="gone"/> <!-- Initially hidden -->

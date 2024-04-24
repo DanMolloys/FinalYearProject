@@ -3,7 +3,7 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:padding="16dp"
-    android:background="#8499f5"
+    android:background="#8000C2FF"
     android:layout_marginBottom="10dp">
 
     <CheckBox

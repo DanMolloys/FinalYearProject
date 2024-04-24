@@ -9,6 +9,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Select a Group Chat"
+        android:gravity="center_horizontal"
+        android:fontFamily="@font/bloggersans"
         android:textAppearance="@style/TextAppearance.AppCompat.Large" />
 
     <androidx.recyclerview.widget.RecyclerView

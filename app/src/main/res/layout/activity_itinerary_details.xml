@@ -33,7 +33,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="8dp"
-                app:cardElevation="4dp">
+                app:cardElevation="8dp"
+                android:background="@drawable/cardview_border">
 
                 <TextView
                     android:id="@+id/titleTextView"
@@ -42,8 +43,13 @@
                     android:padding="16dp"
                     android:textSize="24sp"
                     android:textStyle="bold"
-                    android:background="@drawable/text_view_background"
-                    tools:text="Title" />
+                    android:background="@drawable/text_view_custom_background"
+                    android:shadowColor="@color/shadow_gray"
+                    android:shadowDx="2"
+                    android:shadowDy="2"
+                    android:shadowRadius="1"
+                    tools:text="Title"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Headline" />
 
             </androidx.cardview.widget.CardView>
 
@@ -51,7 +57,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="8dp"
-                app:cardElevation="4dp">
+                app:cardElevation="8dp"
+                android:background="@drawable/cardview_border">
 
             <TextView
                 android:id="@+id/descriptionTextView"
@@ -60,45 +67,46 @@
                 android:layout_margin="8dp"
                 android:padding="16dp"
                 android:textSize="18sp"
-                android:background="@drawable/text_view_background"
-                tools:text="Description" />
+                android:background="@drawable/text_view_custom_background"
+                android:shadowColor="@color/shadow_gray"
+                android:shadowDx="2"
+                android:shadowDy="2"
+                android:shadowRadius="1"
+                tools:text="Description"
+                android:textAppearance="@style/TextAppearance.AppCompat.Headline"/>
 
             </androidx.cardview.widget.CardView>
 
-            <androidx.cardview.widget.CardView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="8dp"
-                app:cardElevation="4dp">
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:padding="8dp">
 
-            <TextView
-                android:id="@+id/flightInfoTextView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="8dp"
-                android:padding="16dp"
-                android:textSize="18sp"
-                android:background="@drawable/text_view_background"
-                tools:text="Flight info" />
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/edit_itinerary_button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/button_rounded"
+                    android:padding="16dp"
+                    android:text="Edit Itinerary"
+                    android:fontFamily="@font/bloggersans"
+                    android:layout_marginEnd="4dp" />
 
-            </androidx.cardview.widget.CardView>
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/send_to_chat_button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/button_rounded"
+                    android:fontFamily="@font/bloggersans"
+                    android:padding="16dp"
+                    android:text="Send it!"
+                    android:layout_marginStart="4dp" />
 
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/send_to_chat_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@color/purple"
-                android:padding="16dp"
-                android:text="Send it!" />
-
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/edit_itinerary_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@color/purple"
-                android:padding="16dp"
-                android:text="Edit Itinerary"
-                android:layout_marginTop="8dp"/>
+            </LinearLayout>
 
 
         </LinearLayout>

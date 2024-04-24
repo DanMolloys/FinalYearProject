@@ -40,6 +40,8 @@ class ItineraryDetailsActivity : AppCompatActivity() {
     private lateinit var firebaseAuth: FirebaseAuth
     private lateinit var toolbar: Toolbar
 
+    private var currentUserProfileImageId: Int = R.drawable.baseline_add_24
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityItineraryDetailsBinding.inflate(layoutInflater)
@@ -113,6 +115,7 @@ class ItineraryDetailsActivity : AppCompatActivity() {
         binding.titleTextView.setText(itinerary?.title)
         binding.descriptionTextView.text = itinerary?.description
 
+        fetchCurrentUserProfileImageId()
 
         binding.titleTextView.setOnClickListener {
             if (itinerary != null) {
@@ -237,7 +240,8 @@ class ItineraryDetailsActivity : AppCompatActivity() {
             senderId = FirebaseAuth.getInstance().currentUser?.uid ?: "",
             itineraryTitle = itinerary.title,
             itineraryDescription = itinerary.description,
-            itineraryId = itinerary.id.toString()  // Ensure this is correctly populated
+            itineraryId = itinerary.id.toString(),
+            imageResourceId = currentUserProfileImageId // Use the fetched image ID
         )
 
         // Send the message to the Firestore collection for the selected group chat
@@ -250,6 +254,21 @@ class ItineraryDetailsActivity : AppCompatActivity() {
             .addOnFailureListener { e ->
                 Toast.makeText(this, "Failed to send itinerary to group chat", Toast.LENGTH_SHORT).show()
                 Log.e(TAG, "Error sending itinerary to group chat", e)
+            }
+    }
+
+    private fun fetchCurrentUserProfileImageId() {
+        val userId = firebaseAuth.currentUser?.uid ?: return // Early return if user ID is null
+        firestore.collection("users").document(userId)
+            .get()
+            .addOnSuccessListener { documentSnapshot ->
+                if (documentSnapshot.exists()) {
+                    currentUserProfileImageId = documentSnapshot.getLong("imageResourceId")?.toInt()
+                        ?: R.drawable.baseline_add_24
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.w(TAG, "Error getting user profile image ID: ", e)
             }
     }
 

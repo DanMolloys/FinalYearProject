@@ -13,6 +13,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.AppCompatImageButton
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -40,6 +41,8 @@ class ChatActivity : AppCompatActivity() {
 
     private var groupId: String? = null
 
+    private var currentUserProfileImageId: Int = R.drawable.baseline_add_24
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chat)
@@ -54,6 +57,8 @@ class ChatActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.title = ""
 
+        fetchCurrentUserProfileImageId()
+
         // Initialize the chat adapter with a click listener for proposals
         chatAdapter = ChatAdapter(chatMessages, FirebaseAuth.getInstance().currentUser?.uid ?: "", onProposalClick = { chatMessage ->
             val bottomSheetDialog = BottomSheetDialog(this)
@@ -65,15 +70,18 @@ class ChatActivity : AppCompatActivity() {
             titleTextView.text = chatMessage.itineraryTitle ?: "No title"
             descriptionTextView.text = chatMessage.itineraryDescription ?: "No description"
 
-            view.findViewById<Button>(R.id.vote_green_button).setOnClickListener {
+            val voteGreenButton = view.findViewById<AppCompatImageButton>(R.id.vote_green_button)
+            val voteRedButton = view.findViewById<AppCompatImageButton>(R.id.vote_red_button)
+
+            voteGreenButton.setOnClickListener {
                 castVote(chatMessage.id, "green")
             }
-            view.findViewById<Button>(R.id.vote_red_button).setOnClickListener {
+            voteRedButton.setOnClickListener {
                 castVote(chatMessage.id, "red")
             }
             view.findViewById<Button>(R.id.add_comment_button).setOnClickListener {
-                val chatMessageId = chatMessage.id  // Assuming chatMessage is available here
-                val itineraryId = chatMessage.itineraryId  // Assuming you have this field in ChatMessage
+                val chatMessageId = chatMessage.id
+                val itineraryId = chatMessage.itineraryId
                 showAddCommentDialog(chatMessageId, itineraryId)
             }
 
@@ -103,11 +111,13 @@ class ChatActivity : AppCompatActivity() {
                     senderId = FirebaseAuth.getInstance().currentUser?.uid ?: "",
                     itineraryTitle = it.title,
                     itineraryDescription = it.description,
-                    itineraryId = it.id.toString()
+                    itineraryId = it.id.toString(),
+                    imageResourceId = currentUserProfileImageId
                 )
             } ?: ChatMessage(
                 text = messageText,
-                senderId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+                senderId = FirebaseAuth.getInstance().currentUser?.uid ?: "",
+                imageResourceId = currentUserProfileImageId
             )
 
             // Send the message to Firestore
@@ -150,20 +160,35 @@ class ChatActivity : AppCompatActivity() {
                 }
                 val newMessages = querySnapshot?.documents?.mapNotNull { document ->
                     document.toObject(ChatMessage::class.java)?.apply {
-                        id = document.id // This sets the ChatMessage id
-                        // The Itinerary id should already be set if it was saved correctly
+                        id = document.id
+                        imageResourceId = document.getLong("imageResourceId")?.toInt() ?: R.drawable.baseline_add_24
                     }
                 }.orEmpty()
 
                 chatMessages.clear()
                 chatMessages.addAll(newMessages)
                 chatAdapter.notifyDataSetChanged()
-
             }
     }
 
 
 
+
+    private fun fetchCurrentUserProfileImageId() {
+        val userId = firebaseAuth.currentUser?.uid ?: return // Early return if user ID is null
+        firestore.collection("users").document(userId)
+            .get()
+            .addOnSuccessListener { documentSnapshot ->
+                if (documentSnapshot.exists()) {
+                    // Here we update the currentUserProfileImageId with the one from Firestore
+                    currentUserProfileImageId = documentSnapshot.getLong("imageResourceId")?.toInt()
+                        ?: R.drawable.baseline_add_24
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.w(TAG, "Error getting user profile image ID: ", e)
+            }
+    }
 
     //send an itinerary proposal as a chat message.
     private fun sendItineraryProposal(itinerary: Itinerary) {
@@ -177,7 +202,8 @@ class ChatActivity : AppCompatActivity() {
             senderId = FirebaseAuth.getInstance().currentUser?.uid ?: "",
             itineraryTitle = itinerary.title,
             itineraryDescription = itinerary.description,
-            itineraryId = itinerary.id
+            itineraryId = itinerary.id,
+            imageResourceId = currentUserProfileImageId
         )
 
         val groupId = intent.getStringExtra("GROUP_ID") ?: return
@@ -383,7 +409,6 @@ class ChatActivity : AppCompatActivity() {
                     // Put the GROUP_ID into the new intent
                     intent.putExtra("GROUP_ID", groupId)
                 }
-
                 // Start the MapsViewActivity
                 startActivity(intent)
                 true

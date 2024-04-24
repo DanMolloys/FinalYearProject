@@ -16,6 +16,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Comment"
-        android:backgroundTint="@color/green" />
+        android:layout_gravity="center_horizontal"
+        android:fontFamily="@font/bloggersans"
+        android:background="@drawable/button_rounded_green"
+        android:layout_marginTop="12dp"/>
 
 </LinearLayout>

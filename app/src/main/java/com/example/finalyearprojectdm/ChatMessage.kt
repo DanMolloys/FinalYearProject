@@ -7,6 +7,7 @@ data class ChatMessage(
     var id: String = "",
     val text: String = "",
     val senderId: String = "",
+    var imageResourceId: Int = R.drawable.baseline_add_24,
     val timestamp: Date = Date(),
     val itineraryTitle: String? = null,
     val itineraryDescription: String? = null,
