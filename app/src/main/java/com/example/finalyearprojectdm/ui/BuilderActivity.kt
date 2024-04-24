@@ -294,18 +294,23 @@ class BuilderActivity : AppCompatActivity() {
             // Set the document with the map of data.
             docRef.set(itineraryMap)
                 .addOnSuccessListener {
-                    Log.d(TAG, "Itinerary added with ID: ${itinerary.id}") // Log statement added
+                    Log.d(TAG, "Itinerary added with ID: ${itinerary.id}")
                     Toast.makeText(this, "Itinerary added with ID: ${itinerary.id}", Toast.LENGTH_SHORT).show()
 
                     // After the itinerary document is successfully written, add each day as a subdocument.
                     for (day in itinerary.days) {
+                        // Create a new document reference for each day with an automatic ID.
+                        val dayRef = docRef.collection("days").document()
+                        day.id = dayRef.id
+
                         val dayMap = hashMapOf(
+                            "dayId" to day.id,
                             "dayNumber" to day.dayNumber,
                             "description" to day.description
                         )
-                        docRef.collection("days").add(dayMap)
+                        dayRef.set(dayMap) // Add the day document to Firestore and use the automatic ID.
                             .addOnSuccessListener {
-                                Toast.makeText(this, "Day added successfully", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this, "Day added successfully with ID: ${dayRef.id}", Toast.LENGTH_SHORT).show()
                             }
                             .addOnFailureListener { e ->
                                 Log.e("FirestoreError", "Error adding day: ${e.message}")
@@ -319,5 +324,6 @@ class BuilderActivity : AppCompatActivity() {
             Toast.makeText(this, "No user is logged in", Toast.LENGTH_SHORT).show()
         }
     }
+
 
 }

@@ -11,10 +11,13 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatImageButton
 import androidx.appcompat.widget.Toolbar
+import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -43,6 +46,9 @@ class ChatActivity : AppCompatActivity() {
 
     private var currentUserProfileImageId: Int = R.drawable.baseline_add_24
 
+    private lateinit var drawerLayout: DrawerLayout
+    private lateinit var toggle: ActionBarDrawerToggle
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chat)
@@ -53,6 +59,7 @@ class ChatActivity : AppCompatActivity() {
         firebaseAuth = FirebaseAuth.getInstance()
         firestore = FirebaseFirestore.getInstance()
 
+        drawerLayout = findViewById(R.id.drawer_layout)
         toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.title = ""
@@ -142,6 +149,31 @@ class ChatActivity : AppCompatActivity() {
         uploadImageButton.setOnClickListener {
             selectImage()
         }
+
+        groupId = intent.getStringExtra("GROUP_ID")
+
+        if (groupId != null) {
+            loadChosenItineraryDetails(groupId!!)
+        } else {
+            Toast.makeText(this, "Error: Group ID is null.", Toast.LENGTH_SHORT).show()
+        }
+
+        toggle = ActionBarDrawerToggle(
+            this, drawerLayout, toolbar,
+            R.string.navigation_drawer_open, R.string.navigation_drawer_close
+        )
+        drawerLayout.addDrawerListener(toggle)
+        toggle.syncState()
+
+
+    }
+
+    override fun onBackPressed() {
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START)
+        } else {
+            super.onBackPressed()
+        }
     }
 
 
@@ -223,27 +255,131 @@ class ChatActivity : AppCompatActivity() {
 
     //maybe use Firebase Transactions?
     private fun castVote(messageId: String, vote: String) {
-        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val userId = firebaseAuth.currentUser?.uid ?: return
         val groupId = intent.getStringExtra("GROUP_ID") ?: return
-        val messageRef = FirebaseFirestore.getInstance().collection("groupChats").document(groupId)
+        val messageRef = firestore.collection("groupChats").document(groupId)
             .collection("chatMessages").document(messageId)
 
-        messageRef.get()
-            .addOnSuccessListener { document ->
-                if (document.exists()) {
-                    val votes = document.get("votes") as? MutableMap<String, String> ?: mutableMapOf()
-                    votes[userId] = vote
-                    messageRef.update("votes", votes)
-                        .addOnSuccessListener {
-                            Toast.makeText(this, "Vote recorded successfully!", Toast.LENGTH_SHORT).show()
-                        }
-                        .addOnFailureListener { e ->
-                            Log.e(TAG, "Error recording vote", e)
-                            Toast.makeText(this, "Failed to record vote", Toast.LENGTH_SHORT).show()
-                        }
+        messageRef.get().addOnSuccessListener { documentSnapshot ->
+            if (documentSnapshot.exists()) {
+                val currentVotes = documentSnapshot["votes"] as? MutableMap<String, String> ?: mutableMapOf()
+
+                // Set the user's vote to "green" or "red"
+                currentVotes[userId] = vote
+
+                // Update the document with the new vote
+                messageRef.update("votes", currentVotes).addOnCompleteListener {
+                    if (it.isSuccessful) {
+                        Toast.makeText(this, "Vote updated successfully", Toast.LENGTH_SHORT).show()
+                        checkIfAllApproved(messageId, currentVotes, groupId)
+                    } else {
+                        Toast.makeText(this, "Failed to update vote", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
+        }.addOnFailureListener { e ->
+            Log.e(TAG, "Failed to cast vote: ", e)
+            Toast.makeText(this, "Failed to cast vote", Toast.LENGTH_SHORT).show()
+        }
     }
+
+    private fun checkIfAllApproved(messageId: String, votes: Map<String, String>, groupId: String) {
+        // Here you will check if all users approved the itinerary
+        // You'll need to fetch the user IDs of the group and compare with the votes map
+        val groupChatRef = firestore.collection("groupChats").document(groupId)
+        groupChatRef.get().addOnSuccessListener { documentSnapshot ->
+            val userIds = documentSnapshot["userIds"] as? List<String> ?: return@addOnSuccessListener
+            val allApproved = userIds.all { userId -> votes[userId] == "green" }
+
+            if (allApproved) {
+                // Set the itinerary as "approved" in your UI and Firestore
+                Toast.makeText(this, "All users have approved the itinerary!", Toast.LENGTH_LONG).show()
+                setApprovedItinerary(messageId, groupId)
+            }
+        }
+    }
+
+    private fun setApprovedItinerary(messageId: String, groupId: String) {
+        // Logic to move the itinerary to the "chosenItineraries" subcollection
+        val messageRef = firestore.collection("groupChats").document(groupId)
+            .collection("chatMessages").document(messageId)
+        val chosenItineraryRef = firestore.collection("groupChats").document(groupId)
+            .collection("chosenItineraries").document(messageId)
+
+        firestore.runTransaction { transaction ->
+            val itinerary = transaction.get(messageRef).toObject(ChatMessage::class.java)
+            itinerary?.let {
+                transaction.set(chosenItineraryRef, it)
+            }
+            null
+        }.addOnSuccessListener {
+            // Update UI to show the chosen itinerary
+            updateChosenItineraryUI(messageId)
+        }
+    }
+
+
+
+    private fun updateChosenItineraryUI(messageId: String) {
+        val groupId = intent.getStringExtra("GROUP_ID") ?: return
+
+        firestore.collection("groupChats").document(groupId)
+            .collection("chosenItineraries").document(messageId)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val chosenItinerary = document.toObject(ChatMessage::class.java)
+                    chosenItinerary?.let {
+                        // Update the title and description TextViews
+                        val titleTextView = findViewById<TextView>(R.id.itinerary_title)
+                        val descriptionTextView = findViewById<TextView>(R.id.itinerary_description)
+
+                        titleTextView.text = it.itineraryTitle ?: "No Title Available"
+                        descriptionTextView.text = it.itineraryDescription ?: "No Description Available"
+
+                        // Display the itinerary title in a Toast message
+                        if (it.itineraryTitle != null) {
+                            Toast.makeText(this, "Loaded Itinerary: ${it.itineraryTitle}", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                } else {
+                    Log.d(TAG, "No chosen itinerary found with ID: $messageId")
+                    Toast.makeText(this, "No chosen itinerary available.", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Error getting chosen itinerary: ", e)
+                Toast.makeText(this, "Error loading itinerary.", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+
+
+    private fun loadChosenItineraryDetails(groupId: String) {
+        firestore.collection("groupChats").document(groupId)
+            .collection("chosenItineraries")
+            .get() // This gets all documents in chosenItineraries, assuming there's only one.
+            .addOnSuccessListener { documents ->
+                if (!documents.isEmpty) {
+                    // Get the first document, assuming there's only one chosen itinerary.
+                    val chosenItinerary = documents.documents.first().toObject(ChatMessage::class.java)
+                    chosenItinerary?.let {
+                        // Update the TextViews with the itinerary details
+                        findViewById<TextView>(R.id.itinerary_title).text = it.itineraryTitle
+                        findViewById<TextView>(R.id.itinerary_description).text = it.itineraryDescription
+
+                        // Show the Toast message
+                        Toast.makeText(this, "Chosen itinerary: ${it.itineraryTitle}", Toast.LENGTH_LONG).show()
+                    }
+                } else {
+                    Toast.makeText(this, "No chosen itinerary available.", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "Error loading chosen itinerary: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
 
     private fun showAddCommentDialog(messageId: String, itineraryId: String?) {
         val view = layoutInflater.inflate(R.layout.dialog_add_comment, null)
@@ -386,34 +522,35 @@ class ChatActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        // Pass the menu item to the drawer toggle to see if it can handle the click
+        if (toggle.onOptionsItemSelected(item)) {
+            return true
+        }
+
+        // Handle other menu items here
         return when (item.itemId) {
             R.id.home -> {
-                val intent = Intent (this, MainActivity ::class.java)
+                val intent = Intent(this, MainActivity::class.java)
                 startActivity(intent)
                 true
             }
             R.id.back -> {
                 val intent = Intent(this, GroupChatActivity::class.java)
-                // Pass the itinerary back to GroupChatActivity
                 intent.putExtra("itinerary", itinerary)
                 startActivity(intent)
                 true
             }
             R.id.maps -> {
-                // Create a new intent for MapsViewActivity
                 val intent = Intent(this, MapsViewActivity::class.java)
-
-                // Get the group ID from the current activity's intent
                 val groupId = this.intent.getStringExtra("GROUP_ID")
                 if (groupId != null) {
-                    // Put the GROUP_ID into the new intent
                     intent.putExtra("GROUP_ID", groupId)
                 }
-                // Start the MapsViewActivity
                 startActivity(intent)
                 true
             }
             else -> super.onOptionsItemSelected(item)
         }
     }
+
 }

@@ -16,7 +16,7 @@ import com.bumptech.glide.Glide
 
 
 class ChatAdapter(
-    private val chatMessages: List<ChatMessage>,
+    private val chatMessages: MutableList<ChatMessage>,
     private val currentUserId: String,
     private val onProposalClick: (ChatMessage) -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -111,4 +111,10 @@ class ChatAdapter(
     }
 
 
+    fun addChosenItinerary(chosenItinerary: ChatMessage?) {
+        chosenItinerary?.let {
+            chatMessages.add(it)
+            notifyItemInserted(chatMessages.size - 1)
+        }
+    }
 }

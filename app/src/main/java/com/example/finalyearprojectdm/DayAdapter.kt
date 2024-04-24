@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 class DayAdapter(val days: MutableList<DayItinerary>, private val onDayUpdated: (DayItinerary) -> Unit) : RecyclerView.Adapter<DayAdapter.ViewHolder>() {
 
     var hasChanges = false  // Property to track if any changes have been made
+    private val changedDayIndices = mutableSetOf<Int>()  // Set to track indices of changed days
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val dayNumber: TextView = view.findViewById(R.id.dayNumber)
@@ -28,35 +29,33 @@ class DayAdapter(val days: MutableList<DayItinerary>, private val onDayUpdated: 
         holder.dayNumber.text = "Day ${day.dayNumber}"
         holder.dayDescription.setText(day.description)
 
-        // Listener to detect changes and update the hasChanges flag
         holder.dayDescription.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                val adapterPos = holder.adapterPosition
-                if (adapterPos != RecyclerView.NO_POSITION) {
-                    hasChanges = true  // Assuming you want to track changes
-                }
+                hasChanges = true
             }
 
             override fun afterTextChanged(s: Editable?) {
                 val adapterPos = holder.adapterPosition
                 if (adapterPos != RecyclerView.NO_POSITION) {
                     days[adapterPos].description = s.toString()
+                    changedDayIndices.add(adapterPos)  // Add this day's index to changed indices
                 }
             }
         })
 
-
-        // Save changes when focus is lost to update Firebase and handle UI
         holder.dayDescription.setOnFocusChangeListener { _, hasFocus ->
-            val adapterPos = holder.adapterPosition
-            if (!hasFocus && adapterPos != RecyclerView.NO_POSITION) {
-                onDayUpdated(days[adapterPos])
+            if (!hasFocus) {
+                val updatedText = holder.dayDescription.text.toString()
+                if (days[holder.adapterPosition].description != updatedText) {
+                    days[holder.adapterPosition].description = updatedText
+                    onDayUpdated(days[holder.adapterPosition])
+                    hasChanges = true
+                }
             }
         }
 
-        // Optional: Toggle visibility of EditText on click
         holder.dayNumber.setOnClickListener {
             val adapterPos = holder.adapterPosition
             if (adapterPos != RecyclerView.NO_POSITION) {
@@ -67,6 +66,8 @@ class DayAdapter(val days: MutableList<DayItinerary>, private val onDayUpdated: 
     }
 
     override fun getItemCount(): Int = days.size
+
 }
+
 
 

@@ -360,7 +360,12 @@ class ItineraryDetailsActivity : AppCompatActivity() {
         // Logic to update a single day in Firebase
         val dayRef = firestore.collection("users").document(firebaseAuth.currentUser!!.uid)
             .collection("itineraries").document(itineraryId)
-            .collection("days").document("Day ${updatedDay.dayNumber}")
+            .collection("days").document(updatedDay.id)
+
+        val updates = hashMapOf(
+            "dayDescription" to updatedDay.dayDescription, // Update this line to save the correct field
+            "dayNumber" to updatedDay.dayNumber // Save the day number if needed
+        )
 
         dayRef.update("description", updatedDay.description)
             .addOnSuccessListener {
